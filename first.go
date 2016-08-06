@@ -122,6 +122,11 @@ func (me *HelloFs) GetPath(relPath string) string {
 	return filepath.Join("/tmp/firstDir", relPath)
 }
 
+func (me *HelloFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
+	return fuse.ToStatus(syscall.Unlink(me.GetPath(name)))
+}
+
+
 func (me *HelloFs) Create(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("create file name is %s", name)
 
