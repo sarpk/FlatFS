@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
+	"io"
 )
 
 type HelloFs struct {
@@ -54,13 +55,49 @@ func (me *HelloFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, co
 }
 
 func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
-	log.Printf("opendir name is %s", name)
-	if name == "" {
-		c = []fuse.DirEntry{{Name: "file.txt", Mode: fuse.S_IFREG}}
-		return c, fuse.OK
-	}
+	log.Printf("opendira name is %s", name)
+	//if name == "" {
+	//	c = []fuse.DirEntry{{Name: "file.txt", Mode: fuse.S_IFREG}}
+	//	return c, fuse.OK
+	//}
+	//
+	//return nil, fuse.ENOENT
 
-	return nil, fuse.ENOENT
+	f, err := os.Open(me.GetPath(name))
+	if err != nil {
+		return nil, fuse.ToStatus(err)
+	}
+	want := 500
+	output := make([]fuse.DirEntry, 0, want)
+	for {
+		infos, err := f.Readdir(want)
+		for i := range infos {
+			// workaround forhttps://code.google.com/p/go/issues/detail?id=5960
+			if infos[i] == nil {
+				continue
+			}
+			n := infos[i].Name()
+			d := fuse.DirEntry{
+				Name: n,
+			}
+			if s := fuse.ToStatT(infos[i]); s != nil {
+				d.Mode = uint32(s.Mode)
+			} else {
+				log.Printf("ReadDir entry %q for %q has no stat info", n, name)
+			}
+			output = append(output, d)
+		}
+		if len(infos) < want || err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Println("Readdir() returned err:", err)
+			break
+		}
+	}
+	f.Close()
+
+	return output, fuse.OK
 }
 
 func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
