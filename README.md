@@ -1,2 +1,2 @@
 # FlatFS
-Flat File Structure
+Flat File System With Multiple Attributes
