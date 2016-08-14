@@ -1,6 +1,6 @@
 // A Go mirror of libfuse's hello.c
 
-package main
+package first
 
 import (
 	"flag"
@@ -133,11 +133,13 @@ func (me *HelloFs) Mkdir(path string, mode uint32, context *fuse.Context) (code 
 func (me *HelloFs) Create(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("create file name is %s", name)
 
-	f, err := os.OpenFile(me.GetPath(name), int(flags)|os.O_CREATE, os.FileMode(mode))
+	f, err := os.OpenFile(me.GetPath(name), int(flags) | os.O_CREATE, os.FileMode(mode))
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err)
 }
 
-func main() {
+func start() {
+	testFunc()
+	testFunc()
 	flag.Parse()
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage:\n  hello MOUNTPOINT")
