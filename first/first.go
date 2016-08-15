@@ -137,7 +137,7 @@ func (me *HelloFs) Create(name string, flags uint32, mode uint32, context *fuse.
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err)
 }
 
-func start() {
+func Start() {
 	testFunc()
 	testFunc()
 	flag.Parse()

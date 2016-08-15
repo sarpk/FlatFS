@@ -3,9 +3,9 @@
 package main
 
 import (
-	"???"
+	"./first"
 )
 
 func main() {
-	first.start()
+	first.Start()
 }
