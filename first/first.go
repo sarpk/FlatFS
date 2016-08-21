@@ -13,10 +13,11 @@ import (
 	"path/filepath"
 	"syscall"
 	"io"
+	"strings"
 )
 
 type AttrMapper interface {
-	Foo() string
+	CreateFromQuery(*QueryKeyValue) string
 }
 
 type DBMiddleware interface {
@@ -171,7 +172,7 @@ func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntr
 
 func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("open namea is %s", name)
-	f, err := os.OpenFile(me.GetPath(name), int(flags), 0)
+	f, err := os.OpenFile(me.GetPath("fooo"), int(flags), 0)
 	if err != nil {
 		return nil, fuse.ToStatus(err)
 	}
@@ -199,10 +200,29 @@ func (me *HelloFs) Mkdir(path string, mode uint32, context *fuse.Context) (code 
 	return fuse.ToStatus(os.Mkdir(me.GetPath(path), os.FileMode(mode)))
 }
 
+type QueryKeyValue struct {
+	keyValue map[string]string
+}
+
+func NewQueryKeyValue() *QueryKeyValue {
+	return &QueryKeyValue{
+		keyValue: make(map[string]string, 0),
+	}
+}
+
+func ParseQuery(raw string) *QueryKeyValue {
+	query := NewQueryKeyValue()
+	for _, kv := range strings.Split(raw, ",") {
+		pair := strings.Split(kv, "=")
+		query.keyValue[pair[0]] = pair[1]
+	}
+	return query
+}
+
 func (me *HelloFs) Create(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("create file name is %s", name)
-
-	me.attrMapper.Foo()
+	name = me.attrMapper.CreateFromQuery(ParseQuery(name))
+	log.Printf("Saving the file name as %s", name)
 	f, err := os.OpenFile(me.GetPath(name), int(flags) | os.O_CREATE, os.FileMode(mode))
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err)
 }
