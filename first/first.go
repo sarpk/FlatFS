@@ -15,8 +15,77 @@ import (
 	"io"
 )
 
+type AttrMapper interface {
+	Foo() string
+}
+
+type DBMiddleware interface {
+	FileAttributes(string) string
+}
+
 type HelloFs struct {
 	pathfs.FileSystem
+	attrMapper AttrMapper
+}
+
+//func (helloFs *HelloFs) DBMiddleware() DBMiddleware {
+//	return helloFs.dbMiddleware
+//}
+
+type MockMiddleware struct {
+	DBMiddleware
+}
+
+func NewMockMiddleware() *MockMiddleware {
+	mockMiddleware := &MockMiddleware{}
+	return mockMiddleware
+}
+
+func (mockMiddleware *MockMiddleware) FileAttributes(attributes string) string {
+	fileAttributes := attributes
+	log.Println("Mocking middleware")
+	return fileAttributes
+}
+
+type DBMiddlewareManager struct {
+	middlewares map[string]DBMiddleware
+}
+
+func NewDBMiddlewareManager() *DBMiddlewareManager {
+	dbMiddlewareManager := &DBMiddlewareManager{
+		middlewares: make(map[string]DBMiddleware, 0),
+	}
+	return dbMiddlewareManager
+}
+
+func (dbMiddlewareManager *DBMiddlewareManager) Map() map[string]DBMiddleware {
+	return dbMiddlewareManager.middlewares
+}
+
+func (dbMiddlewareManager *DBMiddlewareManager) Has(id string) bool {
+	_, ok := dbMiddlewareManager.middlewares[id]
+	return ok
+}
+
+func (dbMiddlewareManager *DBMiddlewareManager) Get(id string) DBMiddleware {
+	if dbMiddleware, ok := dbMiddlewareManager.middlewares[id]; ok {
+		return dbMiddleware
+	}
+	log.Fatalf("Implementation %v not found!\n", id)
+	return nil
+}
+
+func (dbMiddlewareManager *DBMiddlewareManager) Set(id string, dbMiddleware DBMiddleware) DBMiddleware {
+	dbMiddlewareManager.middlewares[id] = dbMiddleware
+	return dbMiddlewareManager.middlewares[id]
+}
+
+func (dbMiddlewareManager *DBMiddlewareManager) Pop(id string) DBMiddleware {
+	tempDbMiddleware, ok := dbMiddlewareManager.middlewares[id]
+	if ok {
+		delete(dbMiddlewareManager.middlewares, id)
+	}
+	return tempDbMiddleware
 }
 
 //func (me *HelloFs) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
@@ -133,9 +202,14 @@ func (me *HelloFs) Mkdir(path string, mode uint32, context *fuse.Context) (code 
 func (me *HelloFs) Create(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("create file name is %s", name)
 
+	me.attrMapper.Foo()
 	f, err := os.OpenFile(me.GetPath(name), int(flags) | os.O_CREATE, os.FileMode(mode))
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err)
 }
+
+var(
+	AttrMapperManagerInjector AttrMapperManager
+)
 
 func Start() {
 	testFunc()
@@ -144,7 +218,12 @@ func Start() {
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage:\n  hello MOUNTPOINT")
 	}
-	nfs := pathfs.NewPathNodeFs(&HelloFs{FileSystem: pathfs.NewDefaultFileSystem()}, nil)
+
+	helloFs := &HelloFs{
+		FileSystem: pathfs.NewDefaultFileSystem(),
+		attrMapper: AttrMapperManagerInjector.Get("default"),
+	}
+	nfs := pathfs.NewPathNodeFs(helloFs, nil)
 	nfs.SetDebug(true)
 	server, _, err := nodefs.MountRoot(flag.Arg(0), nfs.Root(), nil)
 	server.SetDebug(true)
