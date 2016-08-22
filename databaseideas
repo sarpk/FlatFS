@@ -1,0 +1,100 @@
+-- Note: this file should go into a docs/db directory...
+
+Given the following set of files:
+
+f01(type:jpg,city:london,subject:tower)
+f02(type:jpg,city:paris,creator:sarp)
+f03(subject:tunnel,rating:9,creator:stijn)
+f04(type:jpg,rating:7,creator:sarp)
+
+If a user does      ls 'type=jpg;creator=sarp'  
+the following should be displayed:
+
+type:jpg;city:paris;creator:sarp
+type:jpg;rating:7;creator:sarp
+
+The output can be used as input to subsequent operations.
+
+A separate (new) utility function could take that output and
+use it to generate a clean table with 3 rows and 4 colums:
+
+_type_  _city_ _rating_ _creator_
+  jpg    paris    --      sarp
+  jpg     --       7      sarp
+
+
+QUERIES
+-------
+The "ls" return is simple to implement using 1 query. But
+to return the 'clean' table above, three queries are needed:
+
+1. return files matching the criteria
+2. return the union of all attributes used by the returned files
+3. for each file, return all attributes and their values
+
+Two different schemas can support these requirements. 
+They differ on simplicity (or otherwise) of the queries.
+They likely also differ on performance (depends on SQLite Query Optimizer)
+Perhaps both could be implemented, as separate backends, and perf tested?
+
+
+DATABASE SCHEMA 1
+-----------------
+
+FileMetadata(fileID, attribute, value)  (Primary Key = {fileID,attribute})
+
+The above instance would be stored as:
+
+f01  type     jpg
+f01  city     london
+f01  subject  tower
+f02  type     jpg
+f02  city     paris
+f02  creator  sarp
+...
+
+Hence every file has n rows; one row per attribute.
+
+Query 1: 
+   SELECT fileID FROM FileMetadata WHERE attribute='type' AND value='jpg'
+   INTERSECT
+   SELECT fileID FROM FileMetadata WHERE attribute='creator' AND value='sarp';
+  
+Query 2:
+   SELECT attribute FROM FileMetadata WHERE fileID IN (...query-1...);
+
+Query 3:
+   SELECT attribute,value FROM FileMetadata WHERE fileID IN (...query-1...);
+  
+
+DATABASE SCHEMA 2
+-----------------
+Files(fileID,att1,val1,att2,val2,....)  (Primary Key = {FileID})
+
+The table schema will need to be changed (addition of columns) each time attributes
+are added that didn't already exist.  Hence use Query 2 to first find existing
+attributes before determining whether schema change is required.
+
+The above instance would be stored as:
+
+f01  jpg  london  tower  NULL    NULL
+f02  jpg  paris   NULL   sarp    NULL
+f03  NULL NULL    tunnel stijn   9
+f04  jpg  NULL    NULL   sarp    7
+
+Hence every file has only 1 row.
+
+Query 1:
+  SELECT fileID FROM Files WHERE type='jpg' AND creator='sarp';
+ 
+Query 2:
+  This is a bit less easy.  Need to (programmatically!, not SQLite) get the 
+  non-NULL attributes per file, and build a 'minimal union' of the attributes
+  over all files.
+
+Query 3:
+  SELECT * FROM Files WHERE type='jpg' AND creator='sarp';
+
+
+(To support functionality to add a new attribute to the table schema, a similar
+but simpler lookup to the one in Query-2 is needed.)
