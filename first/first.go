@@ -6,9 +6,9 @@ import (
 	"flag"
 	"log"
 
-	"github.com/hanwen/go-fuse/fuse"
-	"github.com/hanwen/go-fuse/fuse/nodefs"
-	"github.com/hanwen/go-fuse/fuse/pathfs"
+	"github.com/sarpk/go-fuse/fuse"
+	"github.com/sarpk/go-fuse/fuse/nodefs"
+	"github.com/sarpk/go-fuse/fuse/pathfs"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -172,7 +172,7 @@ func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntr
 
 func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("open namea is %s", name)
-	f, err := os.OpenFile(me.GetPath("fooo"), int(flags), 0)
+	f, err := os.OpenFile(me.GetPath(name), int(flags), 0)
 	if err != nil {
 		return nil, fuse.ToStatus(err)
 	}
@@ -219,12 +219,12 @@ func ParseQuery(raw string) *QueryKeyValue {
 	return query
 }
 
-func (me *HelloFs) Create(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
+func (me *HelloFs) CreateWithNewPath(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status, newPath string) {
 	log.Printf("create file name is %s", name)
-	name = me.attrMapper.CreateFromQuery(ParseQuery(name))
-	log.Printf("Saving the file name as %s", name)
-	f, err := os.OpenFile(me.GetPath(name), int(flags) | os.O_CREATE, os.FileMode(mode))
-	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err)
+	newPath = me.attrMapper.CreateFromQuery(ParseQuery(name))
+	log.Printf("Saving the file name as %s", newPath)
+	f, err := os.OpenFile(me.GetPath(newPath), int(flags) | os.O_CREATE, os.FileMode(mode))
+	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err), newPath
 }
 
 var(

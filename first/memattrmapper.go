@@ -31,7 +31,7 @@ func (attrMapper *MemAttrMapper) CreateFromQuery(attributes *QueryKeyValue) stri
 	log.Println("Mocking middleware")
 	if uuid, err := uuid.NewV4(); err == nil {
 		uuidStr := uuid.String()
-		uuidStr = "fooo"
+		//uuidStr = "fooo"
 		for key, value := range attributes.keyValue {
 			log.Println("Adding:", key, " and value ", value, " to " , uuidStr)
 			attrMapper.AddQueryToUUID(key,value,uuidStr)
