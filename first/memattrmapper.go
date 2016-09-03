@@ -29,7 +29,7 @@ func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	attrMapper.uuidToAttributeName[uuid] = append(attrMapper.uuidToAttributeName[uuid], key)
 }
 
-func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) {
+func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
 	return strings == nil || strings[key] == nil || strings[key][value] == nil
 }
 
@@ -61,8 +61,8 @@ func AttributesEqual(uniqueResAttrs []string, attributes map[string]string) bool
 	if len(uniqueResAttrs) != len(attributes) {
 		return false
 	}
-	for attr := range uniqueResAttrs {
-		if attributes[attr] == nil {
+	for _, attr := range uniqueResAttrs {
+		if _, ok := attributes[attr]; !ok {
 			return false
 		}
 	}
@@ -92,7 +92,7 @@ func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string
 	}
 	for key, value := range attributes.keyValue {
 		if IsQueryDoesntExistInTheAttributeMap(attrMapper.queryToUuid, key, value) {
-			return nil, false
+			return "", false
 		}
 		uniqueVal = ReduceUniqueValueMapFromAttributeMapper(attrMapper.queryToUuid[key][value], uniqueVal)
 		if len(uniqueVal) == 0 {
