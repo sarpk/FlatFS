@@ -29,12 +29,6 @@ func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	attrMapper.uuidToAttributeName[uuid] = append(attrMapper.uuidToAttributeName[uuid], key)
 }
 
-func ReturnFirstForMap(uniqueVal map[string]bool) (string, bool) {
-	for uniqueUuid := range uniqueVal {
-		return uniqueUuid, true
-	}
-}
-
 func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) {
 	return strings == nil || strings[key] == nil || strings[key][value] == nil
 }
@@ -63,6 +57,34 @@ func ReduceUniqueValueMapFromAttributeMapper(queryToUuid []string, uniqueVal map
 	return lessUniqueVals
 }
 
+func AttributesEqual(uniqueResAttrs []string, attributes map[string]string) bool {
+	if len(uniqueResAttrs) != len(attributes) {
+		return false
+	}
+	for attr := range uniqueResAttrs {
+		if attributes[attr] == nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (attrMapper *MemAttrMapper) ReturnEqualAttributeResult(uniqueVal map[string]bool, attributes map[string]string) (string, bool) {
+	for uniqueUuid := range uniqueVal {
+		if AttributesEqual(attrMapper.uuidToAttributeName[uniqueUuid], attributes) {
+			return uniqueUuid, true
+		}
+	}
+	return "", false
+}
+
+func ReturnFirstForMap(uniqueVal map[string]bool) (string, bool) {
+	for uniqueUuid := range uniqueVal {
+		return uniqueUuid, true
+	}
+	return "", false
+}
+
 func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string, bool) {
 	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
 	if !found {
@@ -73,15 +95,15 @@ func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string
 			return nil, false
 		}
 		uniqueVal = ReduceUniqueValueMapFromAttributeMapper(attrMapper.queryToUuid[key][value], uniqueVal)
-		if len(uniqueVal) == 0  {
+		if len(uniqueVal) == 0 {
 			//it must mean that it's not unique enough
 			return "", false
 		}
 	}
-	if len(uniqueVal) == 1 {
-		return ReturnFirstForMap(uniqueVal)
+	if len(uniqueVal) > 1 {
+		return attrMapper.ReturnEqualAttributeResult(uniqueVal, attributes.keyValue)
 	}
-	return "", false
+	return ReturnFirstForMap(uniqueVal)
 }
 
 func (attrMapper *MemAttrMapper) CreateNewUUID(attributes *QueryKeyValue) string {
