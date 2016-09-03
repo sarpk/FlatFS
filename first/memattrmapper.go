@@ -9,7 +9,7 @@ import (
 
 type MemAttrMapper struct {
 	AttrMapper
-	queryToUuid map[string]map[string][]string
+	queryToUuid         map[string]map[string][]string
 	uuidToAttributeName map[string][]string
 }
 
@@ -29,39 +29,57 @@ func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	attrMapper.uuidToAttributeName[uuid] = append(attrMapper.uuidToAttributeName[uuid], key)
 }
 
-func ReturnFirst(uniqueVal map[string]bool) (string, bool) {
+func ReturnFirstForMap(uniqueVal map[string]bool) (string, bool) {
 	for uniqueUuid := range uniqueVal {
 		return uniqueUuid, true
 	}
 }
 
-func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string, bool) {
+func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) {
+	return strings == nil || strings[key] == nil || strings[key][value] == nil
+}
+
+func (attrMapper *MemAttrMapper) ReturnFirstUUIDFromAttribute(strings map[string]string) (map[string]bool, bool) {
 	uniqueVal := make(map[string]bool, 0)
-	itemAddedToMap := false
+	for key, value := range strings {
+		if IsQueryDoesntExistInTheAttributeMap(attrMapper.queryToUuid, key, value) {
+			return nil, false
+		}
+		for _, uuid := range attrMapper.queryToUuid[key][value] {
+			uniqueVal[uuid] = true
+		}
+		return uniqueVal, true
+	}
+	return nil, false
+}
+
+func ReduceUniqueValueMapFromAttributeMapper(queryToUuid []string, uniqueVal map[string]bool) map[string]bool {
+	lessUniqueVals := make(map[string]bool, 0)
+	for _, uuid := range queryToUuid {
+		if uniqueVal[uuid] {
+			lessUniqueVals[uuid] = true
+		}
+	}
+	return lessUniqueVals
+}
+
+func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string, bool) {
+	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
+	if !found {
+		return "", false
+	}
 	for key, value := range attributes.keyValue {
-		if attrMapper.queryToUuid[key] == nil || attrMapper.queryToUuid[key][value] == nil {
-			return "", false
+		if IsQueryDoesntExistInTheAttributeMap(attrMapper.queryToUuid, key, value) {
+			return nil, false
 		}
-		if len(uniqueVal) == 0 && !itemAddedToMap {
-			for _, uuid := range attrMapper.queryToUuid[key][value] {
-				uniqueVal[uuid] = true
-				itemAddedToMap = true
-			}
-		} else {
-			lessUniqueVals := make(map[string]bool, 0)
-			for _, uuid := range attrMapper.queryToUuid[key][value] {
-				if uniqueVal[uuid] {
-					lessUniqueVals[uuid] = true
-				}
-			}
-			uniqueVal = lessUniqueVals
-		}
-		if len(uniqueVal) == 0 && itemAddedToMap { //it must mean that it's not unique enough
+		uniqueVal = ReduceUniqueValueMapFromAttributeMapper(attrMapper.queryToUuid[key][value], uniqueVal)
+		if len(uniqueVal) == 0  {
+			//it must mean that it's not unique enough
 			return "", false
 		}
 	}
 	if len(uniqueVal) == 1 {
-		return ReturnFirst(uniqueVal)
+		return ReturnFirstForMap(uniqueVal)
 	}
 	return "", false
 }
@@ -70,8 +88,8 @@ func (attrMapper *MemAttrMapper) CreateNewUUID(attributes *QueryKeyValue) string
 	if uuid, err := uuid.NewV4(); err == nil {
 		uuidStr := uuid.String()
 		for key, value := range attributes.keyValue {
-			log.Println("Adding:", key, " and value ", value, " to " , uuidStr)
-			attrMapper.AddQueryToUUID(key,value,uuidStr)
+			log.Println("Adding:", key, " and value ", value, " to ", uuidStr)
+			attrMapper.AddQueryToUUID(key, value, uuidStr)
 		}
 		return uuidStr
 	} else {
