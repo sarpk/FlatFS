@@ -18,6 +18,7 @@ import (
 
 type AttrMapper interface {
 	CreateFromQuery(*QueryKeyValue) string
+	GetAddedUUID(attributes *QueryKeyValue) (string, bool)
 }
 
 type DBMiddleware interface {
@@ -105,7 +106,14 @@ func (dbMiddlewareManager *DBMiddlewareManager) Pop(id string) DBMiddleware {
 //}
 
 func (me *HelloFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
-	fullPath := me.GetPath(name)
+	log.Printf("GetAttr for name is %s", name)
+	//fullPath :=
+	fullPath, fileFound := me.attrMapper.GetAddedUUID(ParseQuery(name))
+	if !fileFound {
+		fullPath = name
+	}
+	fullPath = me.GetPath(fullPath)
+	log.Printf("Found path is  %s", fullPath)
 	var err error = nil
 	st := syscall.Stat_t{}
 	if name == "" {
@@ -172,6 +180,7 @@ func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntr
 
 func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("open namea is %s", name)
+	name, _ = me.attrMapper.GetAddedUUID(ParseQuery(name))
 	f, err := os.OpenFile(me.GetPath(name), int(flags), 0)
 	if err != nil {
 		return nil, fuse.ToStatus(err)
@@ -214,7 +223,9 @@ func ParseQuery(raw string) *QueryKeyValue {
 	query := NewQueryKeyValue()
 	for _, kv := range strings.Split(raw, ",") {
 		pair := strings.Split(kv, "=")
-		query.keyValue[pair[0]] = pair[1]
+		if (len(pair) == 2) {
+			query.keyValue[pair[0]] = pair[1]
+		}
 	}
 	return query
 }
@@ -227,7 +238,7 @@ func (me *HelloFs) CreateWithNewPath(name string, flags uint32, mode uint32, con
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err), newPath
 }
 
-var(
+var (
 	AttrMapperManagerInjector AttrMapperManager
 )
 
