@@ -128,8 +128,3 @@ func (attrMapper *MemAttrMapper) CreateFromQuery(attributes *QueryKeyValue) stri
 	}
 	return attrMapper.CreateNewUUID(attributes)
 }
-
-func init() {
-	AttrMapperManagerInjector = *NewAttrMapperManager()
-	AttrMapperManagerInjector.Set("default", NewMemAttrMapper())
-}

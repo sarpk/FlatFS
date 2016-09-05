@@ -242,7 +242,14 @@ var (
 	AttrMapperManagerInjector AttrMapperManager
 )
 
+func Prepare() {
+	AttrMapperManagerInjector = *NewAttrMapperManager()
+	AttrMapperManagerInjector.Set("default", NewMemAttrMapper())
+	AttrMapperManagerInjector.Set("sqlite", NewSQLiteAttrMapper())
+}
+
 func Start() {
+	Prepare()
 	testFunc()
 	testFunc()
 	flag.Parse()
@@ -252,7 +259,7 @@ func Start() {
 
 	helloFs := &HelloFs{
 		FileSystem: pathfs.NewDefaultFileSystem(),
-		attrMapper: AttrMapperManagerInjector.Get("default"),
+		attrMapper: AttrMapperManagerInjector.Get("sqlite"),
 	}
 	nfs := pathfs.NewPathNodeFs(helloFs, nil)
 	nfs.SetDebug(true)
