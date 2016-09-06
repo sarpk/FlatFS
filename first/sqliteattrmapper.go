@@ -9,7 +9,7 @@ import (
 
 type SQLiteAttrMapper struct {
 	AttrMapper
-	db* sql.DB
+	db *sql.DB
 }
 
 type FileMetadataEntry struct {
@@ -97,10 +97,27 @@ func (attrMapper *SQLiteAttrMapper) StoreEntry(entries []FileMetadataEntry) {
 }
 
 func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string, bool) {
+	log.Println("Reading all entries")
+	log.Println(attrMapper.ReadEntry())
 	return "", false
+}
+
+func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
+	file := FileMetadataEntry{
+		fileID: uuid,
+		attribute: key,
+		value: value,
+	}
+	attrMapper.StoreEntry([]FileMetadataEntry{file})
 }
 
 func (attrMapper *SQLiteAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
 	log.Println("Not implemented")
-	return "foo"
+
+	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes)
+	if attributeAdded {
+		return uuidStr
+	}
+	return CreateNewUUID(attributes, attrMapper.AddQueryToUUID)
+
 }

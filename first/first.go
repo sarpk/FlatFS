@@ -16,11 +16,7 @@ import (
 	"strings"
 )
 
-type AttrMapper interface {
-	CreateFromQuery(*QueryKeyValue) string
-	GetAddedUUID(attributes *QueryKeyValue) (string, bool)
-	Close()
-}
+
 
 type DBMiddleware interface {
 	FileAttributes(string) string
@@ -30,10 +26,6 @@ type HelloFs struct {
 	pathfs.FileSystem
 	attrMapper AttrMapper
 }
-
-//func (helloFs *HelloFs) DBMiddleware() DBMiddleware {
-//	return helloFs.dbMiddleware
-//}
 
 type MockMiddleware struct {
 	DBMiddleware
@@ -90,21 +82,6 @@ func (dbMiddlewareManager *DBMiddlewareManager) Pop(id string) DBMiddleware {
 	}
 	return tempDbMiddleware
 }
-
-//func (me *HelloFs) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
-//	log.Printf("getattr name is %s", name)
-//	switch name {
-//	case "file.txt":
-//		return &fuse.Attr{
-//			Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
-//		}, fuse.OK
-//	case "":
-//		return &fuse.Attr{
-//			Mode: fuse.S_IFDIR | 0755,
-//		}, fuse.OK
-//	}
-//	return nil, fuse.ENOENT
-//}
 
 func (me *HelloFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
 	log.Printf("GetAttr for name is %s", name)
@@ -188,14 +165,6 @@ func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file 
 	}
 	return nodefs.NewLoopbackFile(f), fuse.OK
 
-	//
-	//if name != "file.txt" {
-	//	return nil, fuse.ENOENT
-	//}
-	//if flags & fuse.O_ANYWRITE != 0 {
-	//	return nil, fuse.EPERM
-	//}
-	//return nodefs.NewDataFile([]byte("asdasd")), fuse.OK
 }
 
 func (me *HelloFs) GetPath(relPath string) string {

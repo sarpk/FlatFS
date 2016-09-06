@@ -4,7 +4,6 @@ package first
 
 import (
 	"log"
-	"github.com/nu7hatch/gouuid"
 )
 
 type MemAttrMapper struct {
@@ -110,25 +109,11 @@ func (attrMapper *MemAttrMapper) Close() {
 	//TODO Save it to disk
 }
 
-func (attrMapper *MemAttrMapper) CreateNewUUID(attributes *QueryKeyValue) string {
-	if uuid, err := uuid.NewV4(); err == nil {
-		uuidStr := uuid.String()
-		for key, value := range attributes.keyValue {
-			log.Println("Adding:", key, " and value ", value, " to ", uuidStr)
-			attrMapper.AddQueryToUUID(key, value, uuidStr)
-		}
-		return uuidStr
-	} else {
-		log.Fatalf("Could not generate GUID for %v \n Error %v \n", attributes, err)
-	}
-	return ""
-}
-
 func (attrMapper *MemAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
 	log.Println("Mocking middleware")
 	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes)
 	if attributeAdded {
 		return uuidStr
 	}
-	return attrMapper.CreateNewUUID(attributes)
+	return CreateNewUUID(attributes, attrMapper.AddQueryToUUID)
 }
