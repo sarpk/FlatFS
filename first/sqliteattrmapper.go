@@ -5,6 +5,8 @@ package first
 import (
 	"log"
 	"database/sql"
+	"fmt"
+	"bytes"
 )
 
 type SQLiteAttrMapper struct {
@@ -50,12 +52,8 @@ func (attrMapper *SQLiteAttrMapper) CreateTable() {
 	}
 }
 
-func (attrMapper *SQLiteAttrMapper) ReadEntry() []FileMetadataEntry {
-	sql_readAll := `
-	SELECT fileID, attribute, value FROM FileMetadata
-	`
-
-	rows, err := attrMapper.db.Query(sql_readAll)
+func (attrMapper *SQLiteAttrMapper) ReadEntries(query string) []FileMetadataEntry {
+	rows, err := attrMapper.db.Query(query)
 	if err != nil {
 		panic(err)
 	}
@@ -65,6 +63,25 @@ func (attrMapper *SQLiteAttrMapper) ReadEntry() []FileMetadataEntry {
 	for rows.Next() {
 		entry := FileMetadataEntry{}
 		err2 := rows.Scan(&entry.fileID, &entry.attribute, &entry.value)
+		if err2 != nil {
+			panic(err2)
+		}
+		result = append(result, entry)
+	}
+	return result
+}
+
+func (attrMapper *SQLiteAttrMapper) ReadEntries2(query string) []FileMetadataEntry {
+	rows, err := attrMapper.db.Query(query)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	var result []FileMetadataEntry
+	for rows.Next() {
+		entry := FileMetadataEntry{}
+		err2 := rows.Scan(&entry.fileID)
 		if err2 != nil {
 			panic(err2)
 		}
@@ -96,9 +113,45 @@ func (attrMapper *SQLiteAttrMapper) StoreEntry(entries []FileMetadataEntry) {
 	}
 }
 
+func (attrMapper *SQLiteAttrMapper) ReadEntry() []FileMetadataEntry {
+	sql_readAll := `
+	SELECT fileID, attribute, value FROM FileMetadata
+	`
+	return attrMapper.ReadEntries(sql_readAll)
+}
+
+func QueryBuilder(attributes *QueryKeyValue) (string, bool) {
+	if attributes == nil || attributes.keyValue == nil || len(attributes.keyValue) == 0 {
+		return "", false
+	}
+	var queryBuf bytes.Buffer
+	var attrBuf bytes.Buffer
+	for key, value := range attributes.keyValue {
+		if queryBuf.Len() != 0 && attrBuf.Len() != 0 {
+			queryBuf.WriteString("INTERSECT ")
+			attrBuf.WriteString(" AND ")
+		}
+		queryBuf.WriteString(fmt.Sprintf("SELECT fileID FROM FileMetadata WHERE attribute='%v' AND value='%v' ", key, value))
+		attrBuf.WriteString(fmt.Sprintf("attribute!='%v'", key))
+
+	}
+	if attrBuf.Len() != 0 {
+		queryBuf.WriteString("EXCEPT SELECT fileID FROM FileMetadata WHERE ")
+		queryBuf.Write(attrBuf.Bytes())
+	}
+	return queryBuf.String(), true
+}
+
 func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string, bool) {
 	log.Println("Reading all entries")
 	log.Println(attrMapper.ReadEntry())
+
+	builtQuery, querySuccess := QueryBuilder(attributes)
+	if querySuccess {
+		log.Println("Built this query ", builtQuery)
+		log.Println(attrMapper.ReadEntries2(builtQuery))
+	}
+
 	return "", false
 }
 
