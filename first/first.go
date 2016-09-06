@@ -19,6 +19,7 @@ import (
 type AttrMapper interface {
 	CreateFromQuery(*QueryKeyValue) string
 	GetAddedUUID(attributes *QueryKeyValue) (string, bool)
+	Close()
 }
 
 type DBMiddleware interface {
@@ -256,10 +257,11 @@ func Start() {
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage:\n  hello MOUNTPOINT")
 	}
-
+	attrMapperFromManager:= AttrMapperManagerInjector.Get("sqlite")
+	defer attrMapperFromManager.Close()
 	helloFs := &HelloFs{
 		FileSystem: pathfs.NewDefaultFileSystem(),
-		attrMapper: AttrMapperManagerInjector.Get("sqlite"),
+		attrMapper: attrMapperFromManager,
 	}
 	nfs := pathfs.NewPathNodeFs(helloFs, nil)
 	nfs.SetDebug(true)

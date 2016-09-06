@@ -106,6 +106,10 @@ func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string
 	return ReturnFirstForMap(uniqueVal)
 }
 
+func (attrMapper *MemAttrMapper) Close() {
+	//TODO Save it to disk
+}
+
 func (attrMapper *MemAttrMapper) CreateNewUUID(attributes *QueryKeyValue) string {
 	if uuid, err := uuid.NewV4(); err == nil {
 		uuidStr := uuid.String()
