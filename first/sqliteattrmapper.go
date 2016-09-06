@@ -149,9 +149,16 @@ func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (str
 	builtQuery, querySuccess := QueryBuilder(attributes)
 	if querySuccess {
 		log.Println("Built this query ", builtQuery)
-		log.Println(attrMapper.ReadEntries2(builtQuery))
+		results := attrMapper.ReadEntries2(builtQuery)
+		log.Println(results)
+		if len(results) < 2 {
+			for _, result := range results {
+				return result.fileID, true
+			}
+		} else {
+			log.Fatal("Found ", len(results), " results instead of 1")
+		}
 	}
-
 	return "", false
 }
 
