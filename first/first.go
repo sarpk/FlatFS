@@ -118,7 +118,15 @@ func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntr
 	//}
 	//
 	//return nil, fuse.ENOENT
+	foundQueries, fileFound := me.attrMapper.FindAllMatchingQueries(ParseQuery(name))
+	if !fileFound {
+		_, err := os.Open(me.GetPath(name))
+		return nil, fuse.ToStatus(err)
+	}
 
+	for something, another := range foundQueries {
+		log.Printf("will process this query %v and %v", something, another)
+	}
 	f, err := os.Open(me.GetPath(name))
 	if err != nil {
 		return nil, fuse.ToStatus(err)
@@ -226,7 +234,7 @@ func Start() {
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage:\n  hello MOUNTPOINT")
 	}
-	attrMapperFromManager:= AttrMapperManagerInjector.Get("sqlite")
+	attrMapperFromManager:= AttrMapperManagerInjector.Get("default")
 	defer attrMapperFromManager.Close()
 	helloFs := &HelloFs{
 		FileSystem: pathfs.NewDefaultFileSystem(),

@@ -8,14 +8,14 @@ import (
 
 type MemAttrMapper struct {
 	AttrMapper
-	queryToUuid         map[string]map[string][]string
-	uuidToAttributeName map[string][]string
+	queryToUuid          map[string]map[string][]string
+	uuidToAttributeValue map[string]map[string]string
 }
 
 func NewMemAttrMapper() *MemAttrMapper {
 	memAttrMapper := &MemAttrMapper{
 		queryToUuid: make(map[string]map[string][]string, 0),
-		uuidToAttributeName: make(map[string][]string, 0),
+		uuidToAttributeValue: make(map[string]map[string]string, 0),
 	}
 	return memAttrMapper
 }
@@ -25,7 +25,11 @@ func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 		attrMapper.queryToUuid[key] = make(map[string][]string, 0)
 	}
 	attrMapper.queryToUuid[key][value] = append(attrMapper.queryToUuid[key][value], uuid)
-	attrMapper.uuidToAttributeName[uuid] = append(attrMapper.uuidToAttributeName[uuid], key)
+
+	if attrMapper.uuidToAttributeValue[uuid] == nil {
+		attrMapper.uuidToAttributeValue[uuid] = make(map[string]string, 0)
+	}
+	attrMapper.uuidToAttributeValue[uuid][key] = value
 }
 
 func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
@@ -56,11 +60,11 @@ func ReduceUniqueValueMapFromAttributeMapper(queryToUuid []string, uniqueVal map
 	return lessUniqueVals
 }
 
-func AttributesEqual(uniqueResAttrs []string, attributes map[string]string) bool {
+func AttributesEqual(uniqueResAttrs map[string]string, attributes map[string]string) bool {
 	if len(uniqueResAttrs) != len(attributes) {
 		return false
 	}
-	for _, attr := range uniqueResAttrs {
+	for attr := range uniqueResAttrs {
 		if _, ok := attributes[attr]; !ok {
 			return false
 		}
@@ -69,8 +73,11 @@ func AttributesEqual(uniqueResAttrs []string, attributes map[string]string) bool
 }
 
 func (attrMapper *MemAttrMapper) ReturnEqualAttributeResult(uniqueVal map[string]bool, attributes map[string]string) (string, bool) {
+	if uniqueVal == nil {
+		return "", false
+	}
 	for uniqueUuid := range uniqueVal {
-		if AttributesEqual(attrMapper.uuidToAttributeName[uniqueUuid], attributes) {
+		if AttributesEqual(attrMapper.uuidToAttributeValue[uniqueUuid], attributes) {
 			return uniqueUuid, true
 		}
 	}
@@ -99,10 +106,51 @@ func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string
 			return "", false
 		}
 	}
-	if len(uniqueVal) > 1 {
-		return attrMapper.ReturnEqualAttributeResult(uniqueVal, attributes.keyValue)
+	if len(uniqueVal) == 0 {
+		return "", false //No unique UUID for the given query found
 	}
-	return ReturnFirstForMap(uniqueVal)
+
+	path, unique := attrMapper.ReturnEqualAttributeResult(uniqueVal, attributes.keyValue)
+	if unique {
+		return path, true
+	}
+	return "", true //It's not unique so it's a folder
+}
+
+func (attrMapper *MemAttrMapper) FindAllMatchingMultipleUUIDs(attributes *QueryKeyValue) (map[string]bool, bool) {
+	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
+	if !found {
+		return nil, false
+	}
+	for key, value := range attributes.keyValue {
+		if IsQueryDoesntExistInTheAttributeMap(attrMapper.queryToUuid, key, value) {
+			return nil, false
+		}
+		uniqueVal = ReduceUniqueValueMapFromAttributeMapper(attrMapper.queryToUuid[key][value], uniqueVal)
+		if len(uniqueVal) == 0 {
+			//it must mean that it's not unique enough
+			return nil, false
+		}
+	}
+	if len(uniqueVal) > 0 {
+		return uniqueVal, true
+	}
+	return nil, false
+}
+
+func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]QueryKeyValue, bool) {
+	uuids, found := attrMapper.FindAllMatchingMultipleUUIDs(attributes)
+	if !found {
+		return nil, false
+	}
+	queryKeyValues := []QueryKeyValue{}
+	for uuid := range uuids {
+		foundQuery := QueryKeyValue{
+			attrMapper.uuidToAttributeValue[uuid],
+		}
+		queryKeyValues = append(queryKeyValues, foundQuery)
+	}
+	return queryKeyValues, true
 }
 
 func (attrMapper *MemAttrMapper) Close() {
