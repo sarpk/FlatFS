@@ -138,15 +138,20 @@ func (attrMapper *MemAttrMapper) FindAllMatchingMultipleUUIDs(attributes *QueryK
 	return nil, false
 }
 
-func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]QueryKeyValue, bool) {
+func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
 	uuids, found := attrMapper.FindAllMatchingMultipleUUIDs(attributes)
 	if !found {
 		return nil, false
 	}
-	queryKeyValues := []QueryKeyValue{}
+	queryKeyValues := []UUIDToQuery{}
 	for uuid := range uuids {
-		foundQuery := QueryKeyValue{
+		queryKeyValue := QueryKeyValue{
 			attrMapper.uuidToAttributeValue[uuid],
+		}
+
+		foundQuery := UUIDToQuery{
+			uuid,
+			queryKeyValue,
 		}
 		queryKeyValues = append(queryKeyValues, foundQuery)
 	}

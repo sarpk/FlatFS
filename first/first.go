@@ -12,8 +12,9 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
-	"io"
 	"strings"
+	"fmt"
+	"bytes"
 )
 
 
@@ -127,41 +128,75 @@ func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntr
 	for something, another := range foundQueries {
 		log.Printf("will process this query %v and %v", something, another)
 	}
-	f, err := os.Open(me.GetPath(name))
-	if err != nil {
-		return nil, fuse.ToStatus(err)
+	//f, err := os.Open(me.GetPath(name))
+	//if err != nil {
+	//	return nil, fuse.ToStatus(err)
+	//}
+	//want := 500
+	output := make([]fuse.DirEntry, 0)
+	//for {
+	//	infos, err := f.Readdir(want)
+	//	for i := range infos {
+	//		// workaround forhttps://code.google.com/p/go/issues/detail?id=5960
+	//		if infos[i] == nil {
+	//			continue
+	//		}
+	//		n := infos[i].Name()
+	//		d := fuse.DirEntry{
+	//			Name: n,
+	//		}
+	//		if s := fuse.ToStatT(infos[i]); s != nil {
+	//			d.Mode = uint32(s.Mode)
+	//		} else {
+	//			log.Printf("ReadDir entry %q for %q has no stat info", n, name)
+	//		}
+	//		output = append(output, d)
+	//	}
+	//	if len(infos) < want || err == io.EOF {
+	//		break
+	//	}
+	//	if err != nil {
+	//		log.Println("Readdir() returned err:", err)
+	//		break
+	//	}
+	//}
+	//f.Close()
+
+	for _, foundQuery := range foundQueries {
+		d := fuse.DirEntry{
+			Name: ConvertToString(foundQuery.querykeyValue),
+		}
+		if s := fuse.ToStatT(me.GetFileInfoFromUUID(foundQuery.uuid)); s != nil {
+			d.Mode = uint32(s.Mode)
+		}
+		output = append(output, d)
 	}
-	want := 500
-	output := make([]fuse.DirEntry, 0, want)
-	for {
-		infos, err := f.Readdir(want)
-		for i := range infos {
-			// workaround forhttps://code.google.com/p/go/issues/detail?id=5960
-			if infos[i] == nil {
-				continue
-			}
-			n := infos[i].Name()
-			d := fuse.DirEntry{
-				Name: n,
-			}
-			if s := fuse.ToStatT(infos[i]); s != nil {
-				d.Mode = uint32(s.Mode)
-			} else {
-				log.Printf("ReadDir entry %q for %q has no stat info", n, name)
-			}
-			output = append(output, d)
-		}
-		if len(infos) < want || err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Println("Readdir() returned err:", err)
-			break
-		}
-	}
-	f.Close()
 
 	return output, fuse.OK
+}
+
+func (me *HelloFs) GetFileInfoFromUUID(uuid string) os.FileInfo {
+	file, oErr := os.Open(me.GetPath(uuid))
+	if oErr != nil {
+		return nil
+	}
+	fInfo, sErr := file.Stat()
+	if sErr != nil {
+		return nil
+	}
+	return fInfo
+}
+
+func ConvertToString(query QueryKeyValue) string {
+	var result bytes.Buffer
+	for key, value := range query.keyValue {
+		if result.Len() != 0 {
+			result.WriteString(",")
+
+		}
+		result.WriteString(fmt.Sprintf("%v=%v", key, value))
+	}
+	return result.String()
 }
 
 func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
@@ -185,6 +220,11 @@ func (me *HelloFs) Unlink(name string, context *fuse.Context) (code fuse.Status)
 
 func (me *HelloFs) Mkdir(path string, mode uint32, context *fuse.Context) (code fuse.Status) {
 	return fuse.ToStatus(os.Mkdir(me.GetPath(path), os.FileMode(mode)))
+}
+
+type UUIDToQuery struct {
+	uuid string
+	querykeyValue QueryKeyValue
 }
 
 type QueryKeyValue struct {
