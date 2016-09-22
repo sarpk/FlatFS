@@ -91,7 +91,7 @@ func ReturnFirstForMap(uniqueVal map[string]bool) (string, bool) {
 	return "", false
 }
 
-func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string, bool) {
+func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool) {
 	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
 	if !found {
 		return "", false
@@ -138,7 +138,7 @@ func (attrMapper *MemAttrMapper) FindAllMatchingMultipleUUIDs(attributes *QueryK
 	return nil, false
 }
 
-func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
+func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue, isFile bool) ([]UUIDToQuery, bool) {
 	uuids, found := attrMapper.FindAllMatchingMultipleUUIDs(attributes)
 	if !found {
 		return nil, false
@@ -164,7 +164,7 @@ func (attrMapper *MemAttrMapper) Close() {
 
 func (attrMapper *MemAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
 	log.Println("Mocking middleware")
-	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes)
+	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, true)
 	if attributeAdded {
 		return uuidStr
 	}

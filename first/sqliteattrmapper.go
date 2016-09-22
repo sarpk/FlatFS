@@ -142,7 +142,7 @@ func QueryBuilder(attributes *QueryKeyValue) (string, bool) {
 	return queryBuf.String(), true
 }
 
-func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue) (string, bool) {
+func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool) {
 	log.Println("Reading all entries")
 	log.Println(attrMapper.ReadEntry())
 
@@ -174,7 +174,7 @@ func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
 func (attrMapper *SQLiteAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
 	log.Println("Not implemented")
 
-	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes)
+	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, true)
 	if attributeAdded {
 		return uuidStr
 	}

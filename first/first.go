@@ -237,7 +237,11 @@ func NewQueryKeyValue() *QueryKeyValue {
 	}
 }
 
-func ParseQuery(raw string) *QueryKeyValue {
+func ParseQuery(raw string) (*QueryKeyValue, bool) {
+	isFile := true
+	if strings.IndexByte(raw, '/') == 0  {
+		isFile = false
+	}
 	query := NewQueryKeyValue()
 	for _, kv := range strings.Split(raw, ",") {
 		pair := strings.Split(kv, "=")
@@ -245,12 +249,13 @@ func ParseQuery(raw string) *QueryKeyValue {
 			query.keyValue[pair[0]] = pair[1]
 		}
 	}
-	return query
+	return query, isFile
 }
 
 func (me *HelloFs) CreateWithNewPath(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status, newPath string) {
 	log.Printf("create file name is %s", name)
-	newPath = me.attrMapper.CreateFromQuery(ParseQuery(name))
+	parsedQuery, _ := ParseQuery(name)
+	newPath = me.attrMapper.CreateFromQuery(parsedQuery)
 	log.Printf("Saving the file name as %s", newPath)
 	f, err := os.OpenFile(me.GetPath(newPath), int(flags) | os.O_CREATE, os.FileMode(mode))
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err), newPath
