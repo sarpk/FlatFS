@@ -110,11 +110,15 @@ func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFile 
 		return "", false //No unique UUID for the given query found
 	}
 
+	if !isFile {
+		return "", true //It's a file or a directory
+	}
+
 	path, unique := attrMapper.ReturnEqualAttributeResult(uniqueVal, attributes.keyValue)
 	if unique {
 		return path, true
 	}
-	return "", true //It's not unique so it's a folder
+	return "", false //It's a directory, but not requested
 }
 
 func (attrMapper *MemAttrMapper) FindAllMatchingMultipleUUIDs(attributes *QueryKeyValue) (map[string]bool, bool) {
