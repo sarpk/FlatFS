@@ -7,14 +7,18 @@ Flat File System With Multiple Attributes
 ### Run
 `docker run -it --name FlatFS --privileged --cap-add SYS_ADMIN --cap-add MKNOD --device=/dev/fuse --security-opt apparmor:unconfined flatfs`
 ### Execute FlatFS
-Attach another bash to your docker instance with (as you need two to use FlatFS)
+Attach another bash to your docker instance with (as you need two to use FlatFS):
+
 `docker exec -it FlatFS bash`
 
-With one instance run
+With one instance run:
+
 `cd usr/gopath/src/github.com/sarpk/FlatFS/`
+
 `./main /tmp/mountpoint/`
 
-On the other bash instance now you can access to /tmp/mountpoint/ with
+On the other bash instance now you can access to /tmp/mountpoint/ with:
+
 `cd /tmp/mountpoint/`
 
 If you want to exit from the FlatFS please use
