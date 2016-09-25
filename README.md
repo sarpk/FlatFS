@@ -21,6 +21,6 @@ On the other bash instance now you can access to /tmp/mountpoint/ with:
 
 `cd /tmp/mountpoint/`
 
-If you want to exit from the FlatFS please make sure you are not in /tmp/mountpoint/ directory and use
+If you want to exit from the FlatFS please make sure you are not in `/tmp/mountpoint/` directory and use
 `fusermount -u /tmp/mountpoint/`
 command instead of just sending SIGINT or SIGTERM (CTRL + C)
