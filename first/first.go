@@ -239,7 +239,7 @@ func NewQueryKeyValue() *QueryKeyValue {
 
 func ParseQuery(raw string) (*QueryKeyValue, bool) {
 	isFile := true
-	if strings.IndexByte(raw, '\\') == 0  {
+	if strings.IndexByte(raw, '?') == 0  {
 		isFile = false
 		raw = raw[1:]
 	}
