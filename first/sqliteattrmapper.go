@@ -1,4 +1,4 @@
-// In memory attribute mapper
+// SQLite attribute mapper
 
 package first
 
@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"bytes"
+	"strings"
 )
 
 type SQLiteAttrMapper struct {
@@ -120,9 +121,50 @@ func (attrMapper *SQLiteAttrMapper) ReadEntry() []FileMetadataEntry {
 	return attrMapper.ReadEntries(sql_readAll)
 }
 
-func QueryBuilder(attributes *QueryKeyValue) (string, bool) {
-	if attributes == nil || attributes.keyValue == nil || len(attributes.keyValue) == 0 {
+func (attrMapper *SQLiteAttrMapper) QueryBuilderForMultipleUUIDSelections(attributes *QueryKeyValue) (string, bool) {
+	_, mainQuery, foundQuery := QueryBuilderForUUIDSelection(attributes)
+	if !foundQuery {
 		return "", false
+	}
+	preResults := attrMapper.ReadEntries2(mainQuery)
+	log.Println(preResults)
+	return fmt.Sprintf("SELECT fileID, attribute, value FROM FileMetadata WHERE fileID IN ( %v )", mainQuery), true
+}
+
+func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
+	builtQuery, querySuccess := attrMapper.QueryBuilderForMultipleUUIDSelections(attributes)
+	if querySuccess {
+		log.Println("Built this query for all matching uuids ", builtQuery)
+		results := attrMapper.ReadEntries(builtQuery)
+		log.Println(results)
+		if len(results) > 0 {
+
+			uuidToAttributeValue := make(map[string]map[string]string, 0)
+			for _, entry := range results {
+				AddKeyValuePairToUUIDMap(entry.attribute, entry.value, entry.fileID, uuidToAttributeValue)
+			}
+
+			queryKeyValues := []UUIDToQuery{}
+			for uuid := range uuidToAttributeValue {
+				queryKeyValue := QueryKeyValue{
+					uuidToAttributeValue[uuid],
+				}
+				foundQuery := UUIDToQuery{
+					uuid,
+					queryKeyValue,
+				}
+				queryKeyValues = append(queryKeyValues, foundQuery)
+			}
+			return queryKeyValues, true
+		}
+	}
+	return nil, false
+}
+
+
+func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bool) {
+	if attributes == nil || attributes.keyValue == nil || len(attributes.keyValue) == 0 {
+		return "", "", false
 	}
 	var queryBuf bytes.Buffer
 	var attrBuf bytes.Buffer
@@ -133,24 +175,35 @@ func QueryBuilder(attributes *QueryKeyValue) (string, bool) {
 		}
 		queryBuf.WriteString(fmt.Sprintf("SELECT fileID FROM FileMetadata WHERE attribute='%v' AND value='%v' ", key, value))
 		attrBuf.WriteString(fmt.Sprintf("attribute!='%v'", key))
-
+		someStr := queryBuf.String()
+		log.Println(someStr)
 	}
+	secondary := queryBuf.String()
 	if attrBuf.Len() != 0 {
 		queryBuf.WriteString("EXCEPT SELECT fileID FROM FileMetadata WHERE ")
 		queryBuf.Write(attrBuf.Bytes())
 	}
-	return queryBuf.String(), true
+	return queryBuf.String(), secondary, true
 }
 
 func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool) {
 	log.Println("Reading all entries")
 	log.Println(attrMapper.ReadEntry())
 
-	builtQuery, querySuccess := QueryBuilder(attributes)
+	builtQuery, secondary, querySuccess := QueryBuilderForUUIDSelection(attributes)
 	if querySuccess {
 		log.Println("Built this query ", builtQuery)
 		results := attrMapper.ReadEntries2(builtQuery)
 		log.Println(results)
+		if len(results) == 0 && !isFile { //Definitely not a file, potentially could be a directory
+			if strings.EqualFold(builtQuery, secondary) {
+				return "", false
+			}
+			results = attrMapper.ReadEntries2(secondary)
+		}
+		if !isFile && len(results) > 0 {
+			return "", true //It's a file or a directory
+		}
 		if len(results) < 2 {
 			for _, result := range results {
 				return result.fileID, true

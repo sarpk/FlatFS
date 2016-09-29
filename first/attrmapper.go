@@ -10,7 +10,7 @@ import (
 type AttrMapper interface {
 	CreateFromQuery(*QueryKeyValue) string
 	GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool)
-	FindAllMatchingQueries(attributes *QueryKeyValue, isFile bool) ([]UUIDToQuery, bool)
+	FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool)
 	Close()
 }
 

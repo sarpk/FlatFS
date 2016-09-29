@@ -20,16 +20,20 @@ func NewMemAttrMapper() *MemAttrMapper {
 	return memAttrMapper
 }
 
+func AddKeyValuePairToUUIDMap(key, value, uuid string, uuidMap map[string]map[string]string) {
+	if uuidMap[uuid] == nil {
+		uuidMap[uuid] = make(map[string]string, 0)
+	}
+	uuidMap[uuid][key] = value
+}
+
 func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	if attrMapper.queryToUuid[key] == nil {
 		attrMapper.queryToUuid[key] = make(map[string][]string, 0)
 	}
 	attrMapper.queryToUuid[key][value] = append(attrMapper.queryToUuid[key][value], uuid)
 
-	if attrMapper.uuidToAttributeValue[uuid] == nil {
-		attrMapper.uuidToAttributeValue[uuid] = make(map[string]string, 0)
-	}
-	attrMapper.uuidToAttributeValue[uuid][key] = value
+	AddKeyValuePairToUUIDMap(key, value, uuid, attrMapper.uuidToAttributeValue)
 }
 
 func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
@@ -142,7 +146,7 @@ func (attrMapper *MemAttrMapper) FindAllMatchingMultipleUUIDs(attributes *QueryK
 	return nil, false
 }
 
-func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue, isFile bool) ([]UUIDToQuery, bool) {
+func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
 	uuids, found := attrMapper.FindAllMatchingMultipleUUIDs(attributes)
 	if !found {
 		return nil, false
