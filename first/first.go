@@ -111,6 +111,11 @@ func (me *HelloFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, co
 	return a, fuse.OK
 }
 
+func (me *HelloFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {
+	log.Printf("Renaming %s to %s", oldName, newName)
+	return fuse.OK
+}
+
 func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	log.Printf("opendira name is %s", name)
 	//if name == "" {
@@ -281,7 +286,7 @@ func Start() {
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage:\n  hello MOUNTPOINT")
 	}
-	attrMapperFromManager:= AttrMapperManagerInjector.Get("sqlite")
+	attrMapperFromManager:= AttrMapperManagerInjector.Get("default")
 	defer attrMapperFromManager.Close()
 	helloFs := &HelloFs{
 		FileSystem: pathfs.NewDefaultFileSystem(),
