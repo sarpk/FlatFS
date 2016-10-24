@@ -4,6 +4,7 @@ package first
 
 import (
 	"log"
+	"strings"
 )
 
 type MemAttrMapper struct {
@@ -34,6 +35,43 @@ func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	attrMapper.queryToUuid[key][value] = append(attrMapper.queryToUuid[key][value], uuid)
 
 	AddKeyValuePairToUUIDMap(key, value, uuid, attrMapper.uuidToAttributeValue)
+}
+
+func RemoveFromString(s []string, element string) []string {
+	elementInd := -1
+	for i, val := range s {
+		if strings.EqualFold(element, val) {
+			elementInd = i
+			break
+		}
+	}
+	if elementInd == -1 {
+		return s
+	}
+
+	s[len(s) - 1], s[elementInd] = s[elementInd], s[len(s) - 1]
+	return s[:len(s) - 1]
+}
+
+func (attrMapper *MemAttrMapper) DeleteUUIDFromKeyValue(key, value, uuid string) {
+	//delete(attrMapper.uuidToAttributeValue[uuid], uuid)
+	delete(attrMapper.uuidToAttributeValue[uuid], key)
+	attrMapper.queryToUuid[key][value] = RemoveFromString(attrMapper.queryToUuid[key][value], uuid)
+}
+
+func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
+	for key, value := range attributes.keyValue {
+		attrMapper.DeleteUUIDFromKeyValue(key, value, uuid)
+	}
+}
+
+func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue) {
+	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, true)
+	if !found {
+		return
+	}
+	attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
+	AddUUIDToAttributes(newSpec, attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
 
 func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
