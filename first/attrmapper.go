@@ -15,13 +15,6 @@ type AttrMapper interface {
 	Close()
 }
 
-func OverwriteUUIDToAttributes(attributes *QueryKeyValue, overwriteQueryToUUID func(string, string, string, string), oldUuid string, newUuid string) {
-	for key, value := range attributes.keyValue {
-		log.Println("Adding:", key, " and value ", value, " to ", newUuid)
-		overwriteQueryToUUID(key, value, oldUuid, newUuid)
-	}
-}
-
 func AddUUIDToAttributes(attributes *QueryKeyValue, addQueryToUUID func(string, string, string), uuid string) {
 	for key, value := range attributes.keyValue {
 		log.Println("Adding:", key, " and value ", value, " to ", uuid)

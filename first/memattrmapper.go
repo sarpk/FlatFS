@@ -37,18 +37,6 @@ func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	AddKeyValuePairToUUIDMap(key, value, uuid, attrMapper.uuidToAttributeValue)
 }
 
-func (attrMapper *MemAttrMapper) OverwriteQueryToUUID(key, value, oldUuid string, newUuid string) {
-	arr := attrMapper.queryToUuid[key][value]
-	for i := range arr {
-		attr := &arr[i]
-		if strings.EqualFold(*attr, oldUuid) {
-			attr = &newUuid
-		}
-	}
-	AddKeyValuePairToUUIDMap(key, value, newUuid, attrMapper.uuidToAttributeValue)
-	attrMapper.uuidToAttributeValue[oldUuid] = nil
-}
-
 func RemoveFromString(s []string, element string) []string {
 	elementInd := -1
 	for i, val := range s {
@@ -86,12 +74,8 @@ func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *Qu
 	replacedUuid, newSpecExists := attrMapper.GetAddedUUID(newSpec, true)
 	if newSpecExists {
 		attrMapper.DeleteUUIDFromQuery(newSpec, replacedUuid)
-		AddUUIDToAttributes(newSpec, attrMapper.AddQueryToUUID, uuidMatchingToFile)
-		//OverwriteUUIDToAttributes(newSpec, attrMapper.OverwriteQueryToUUID,replacedUuid, uuidMatchingToFile)
-	} else {
-		AddUUIDToAttributes(newSpec, attrMapper.AddQueryToUUID, uuidMatchingToFile)
 	}
-
+	AddUUIDToAttributes(newSpec, attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
 
 func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
