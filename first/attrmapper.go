@@ -12,6 +12,7 @@ type AttrMapper interface {
 	GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool)
 	FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool)
 	RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue)
+	DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string)
 	Close()
 }
 

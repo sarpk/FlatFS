@@ -224,7 +224,24 @@ func (me *HelloFs) GetPath(relPath string) string {
 }
 
 func (me *HelloFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
-	return fuse.ToStatus(syscall.Unlink(me.GetPath(name)))
+	parsedQuery, isFile := ParseQuery(name)
+	if !isFile {
+		return fuse.EINVAL;
+	}
+	return me.UnlinkParsedQuery(parsedQuery)
+}
+
+func (me *HelloFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
+	uuid, fileFound := me.attrMapper.GetAddedUUID(parsedQuery, true)
+	if !fileFound {
+		return fuse.ENODATA;
+	}
+	fullPath := me.GetPath(uuid)
+	deleteStatus := fuse.ToStatus(syscall.Unlink(fullPath))
+	if deleteStatus == fuse.OK {
+		me.attrMapper.DeleteUUIDFromQuery(parsedQuery, uuid)
+	}
+	return deleteStatus
 }
 
 func (me *HelloFs) Mkdir(path string, mode uint32, context *fuse.Context) (code fuse.Status) {
