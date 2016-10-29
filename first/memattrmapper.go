@@ -65,18 +65,33 @@ func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, 
 	}
 }
 
-func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue) {
+func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *HelloFs) {
 	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, true)
 	if !found {
 		return
 	}
 	attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
-	replacedUuid, newSpecExists := attrMapper.GetAddedUUID(newSpec, true)
-	if newSpecExists {
-		attrMapper.DeleteUUIDFromQuery(newSpec, replacedUuid)
-	}
+	fs.UnlinkParsedQuery(newSpec)
 	AddUUIDToAttributes(newSpec, attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
+
+func (attrMapper *MemAttrMapper) AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *HelloFs) {
+	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, true)
+	if !found {
+		return
+	}
+	attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
+
+	AddUUIDToAttributes(AppendQueryKeyValue(oldSpec,newSpec), attrMapper.AddQueryToUUID, uuidMatchingToFile)
+}
+
+func AppendQueryKeyValue(toBeAppended *QueryKeyValue, toAppend *QueryKeyValue) *QueryKeyValue {
+	for key, value := range toAppend.keyValue {
+		toBeAppended.keyValue[key] = value
+	}
+	return toBeAppended
+}
+
 
 func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
 	return strings == nil || strings[key] == nil || strings[key][value] == nil

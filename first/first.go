@@ -114,8 +114,12 @@ func (me *HelloFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, co
 func (me *HelloFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {
 	log.Printf("Renaming %s to %s", oldName, newName)
 	oldSpec, _ := ParseQuery(oldName)
-	newSpec, _ := ParseQuery(newName)
-	me.attrMapper.RenameQuery(oldSpec, newSpec)
+	newSpec, isNewSpecAFile := ParseQuery(newName)
+	if !isNewSpecAFile {
+		me.attrMapper.AppendOldSpec(oldSpec, newSpec, me)
+	} else {
+		me.attrMapper.RenameQuery(oldSpec, newSpec, me)
+	}
 	return fuse.OK
 }
 
