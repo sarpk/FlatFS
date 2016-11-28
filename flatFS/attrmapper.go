@@ -11,8 +11,8 @@ type AttrMapper interface {
 	CreateFromQuery(*QueryKeyValue) string
 	GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool)
 	FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool)
-	RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *HelloFs)
-	AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *HelloFs)
+	RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs)
+	AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs)
 	DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string)
 	Close()
 }

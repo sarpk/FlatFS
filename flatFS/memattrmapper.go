@@ -65,7 +65,7 @@ func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, 
 	}
 }
 
-func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *HelloFs) {
+func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
 	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, true)
 	if !found {
 		return
@@ -75,7 +75,7 @@ func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *Qu
 	AddUUIDToAttributes(newSpec, attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
 
-func (attrMapper *MemAttrMapper) AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *HelloFs) {
+func (attrMapper *MemAttrMapper) AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
 	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, true)
 	if !found {
 		return

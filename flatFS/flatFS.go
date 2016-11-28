@@ -21,7 +21,7 @@ type DBMiddleware interface {
 	FileAttributes(string) string
 }
 
-type HelloFs struct {
+type FlatFs struct {
 	pathfs.FileSystem
 	attrMapper AttrMapper
 	flatStorage string
@@ -83,7 +83,7 @@ func (dbMiddlewareManager *DBMiddlewareManager) Pop(id string) DBMiddleware {
 	return tempDbMiddleware
 }
 
-func (me *HelloFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
+func (me *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
 	log.Printf("GetAttr for name is %s", name)
 	//fullPath :=
 	fullPath, fileFound := me.attrMapper.GetAddedUUID(ParseQuery(name))
@@ -110,7 +110,7 @@ func (me *HelloFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, co
 	return a, fuse.OK
 }
 
-func (me *HelloFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {
+func (me *FlatFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {
 	log.Printf("Renaming %s to %s", oldName, newName)
 	oldSpec, _ := ParseQuery(oldName)
 	newSpec, isNewSpecAFile := ParseQuery(newName)
@@ -122,7 +122,7 @@ func (me *HelloFs) Rename(oldName string, newName string, context *fuse.Context)
 	return fuse.OK
 }
 
-func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
+func (me *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	log.Printf("opendira name is %s", name)
 	//if name == "" {
 	//	c = []fuse.DirEntry{{Name: "file.txt", Mode: fuse.S_IFREG}}
@@ -187,7 +187,7 @@ func (me *HelloFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntr
 	return output, fuse.OK
 }
 
-func (me *HelloFs) GetFileInfoFromUUID(uuid string) os.FileInfo {
+func (me *FlatFs) GetFileInfoFromUUID(uuid string) os.FileInfo {
 	file, oErr := os.Open(me.GetPath(uuid))
 	if oErr != nil {
 		return nil
@@ -211,7 +211,7 @@ func ConvertToString(query QueryKeyValue) string {
 	return result.String()
 }
 
-func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
+func (me *FlatFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("open namea is %s", name)
 	name, _ = me.attrMapper.GetAddedUUID(ParseQuery(name))
 	f, err := os.OpenFile(me.GetPath(name), int(flags), 0)
@@ -222,11 +222,11 @@ func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file 
 
 }
 
-func (me *HelloFs) GetPath(relPath string) string {
+func (me *FlatFs) GetPath(relPath string) string {
 	return filepath.Join(me.flatStorage, relPath)
 }
 
-func (me *HelloFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
+func (me *FlatFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
 	parsedQuery, isFile := ParseQuery(name)
 	if !isFile {
 		return fuse.EINVAL;
@@ -234,7 +234,7 @@ func (me *HelloFs) Unlink(name string, context *fuse.Context) (code fuse.Status)
 	return me.UnlinkParsedQuery(parsedQuery)
 }
 
-func (me *HelloFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
+func (me *FlatFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
 	uuid, fileFound := me.attrMapper.GetAddedUUID(parsedQuery, true)
 	if !fileFound {
 		return fuse.ENODATA;
@@ -247,7 +247,7 @@ func (me *HelloFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
 	return deleteStatus
 }
 
-func (me *HelloFs) Mkdir(path string, mode uint32, context *fuse.Context) (code fuse.Status) {
+func (me *FlatFs) Mkdir(path string, mode uint32, context *fuse.Context) (code fuse.Status) {
 	return fuse.ToStatus(os.Mkdir(me.GetPath(path), os.FileMode(mode)))
 }
 
@@ -282,7 +282,7 @@ func ParseQuery(raw string) (*QueryKeyValue, bool) {
 	return query, isFile
 }
 
-func (me *HelloFs) CreateWithNewPath(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status, newPath string) {
+func (me *FlatFs) CreateWithNewPath(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status, newPath string) {
 	log.Printf("create file name is %s", name)
 	parsedQuery, _ := ParseQuery(name)
 	newPath = me.attrMapper.CreateFromQuery(parsedQuery)
@@ -309,12 +309,12 @@ func Start() {
 	}
 	attrMapperFromManager:= AttrMapperManagerInjector.Get(flag.Arg(2))
 	defer attrMapperFromManager.Close()
-	helloFs := &HelloFs{
+	flatFs := &FlatFs{
 		FileSystem: pathfs.NewDefaultFileSystem(),
 		attrMapper: attrMapperFromManager,
 		flatStorage: flag.Arg(1),
 	}
-	nfs := pathfs.NewPathNodeFs(helloFs, nil)
+	nfs := pathfs.NewPathNodeFs(flatFs, nil)
 	nfs.SetDebug(true)
 	server, _, err := nodefs.MountRoot(flag.Arg(0), nfs.Root(), nil)
 	server.SetDebug(true)
