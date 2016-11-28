@@ -15,72 +15,10 @@ import (
 	"bytes"
 )
 
-
-
-type DBMiddleware interface {
-	FileAttributes(string) string
-}
-
 type FlatFs struct {
 	pathfs.FileSystem
 	attrMapper AttrMapper
 	flatStorage string
-}
-
-type MockMiddleware struct {
-	DBMiddleware
-}
-
-func NewMockMiddleware() *MockMiddleware {
-	mockMiddleware := &MockMiddleware{}
-	return mockMiddleware
-}
-
-func (mockMiddleware *MockMiddleware) FileAttributes(attributes string) string {
-	fileAttributes := attributes
-	log.Println("Mocking middleware")
-	return fileAttributes
-}
-
-type DBMiddlewareManager struct {
-	middlewares map[string]DBMiddleware
-}
-
-func NewDBMiddlewareManager() *DBMiddlewareManager {
-	dbMiddlewareManager := &DBMiddlewareManager{
-		middlewares: make(map[string]DBMiddleware, 0),
-	}
-	return dbMiddlewareManager
-}
-
-func (dbMiddlewareManager *DBMiddlewareManager) Map() map[string]DBMiddleware {
-	return dbMiddlewareManager.middlewares
-}
-
-func (dbMiddlewareManager *DBMiddlewareManager) Has(id string) bool {
-	_, ok := dbMiddlewareManager.middlewares[id]
-	return ok
-}
-
-func (dbMiddlewareManager *DBMiddlewareManager) Get(id string) DBMiddleware {
-	if dbMiddleware, ok := dbMiddlewareManager.middlewares[id]; ok {
-		return dbMiddleware
-	}
-	log.Fatalf("Implementation %v not found!\n", id)
-	return nil
-}
-
-func (dbMiddlewareManager *DBMiddlewareManager) Set(id string, dbMiddleware DBMiddleware) DBMiddleware {
-	dbMiddlewareManager.middlewares[id] = dbMiddleware
-	return dbMiddlewareManager.middlewares[id]
-}
-
-func (dbMiddlewareManager *DBMiddlewareManager) Pop(id string) DBMiddleware {
-	tempDbMiddleware, ok := dbMiddlewareManager.middlewares[id]
-	if ok {
-		delete(dbMiddlewareManager.middlewares, id)
-	}
-	return tempDbMiddleware
 }
 
 func (me *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
@@ -124,12 +62,6 @@ func (me *FlatFs) Rename(oldName string, newName string, context *fuse.Context) 
 
 func (me *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	log.Printf("opendira name is %s", name)
-	//if name == "" {
-	//	c = []fuse.DirEntry{{Name: "file.txt", Mode: fuse.S_IFREG}}
-	//	return c, fuse.OK
-	//}
-	//
-	//return nil, fuse.ENOENT
 	parsedQuery, _ := ParseQuery(name)
 	foundQueries, fileFound := me.attrMapper.FindAllMatchingQueries(parsedQuery)
 	if !fileFound {
@@ -140,40 +72,7 @@ func (me *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry
 	for something, another := range foundQueries {
 		log.Printf("will process this query %v and %v", something, another)
 	}
-	//f, err := os.Open(me.GetPath(name))
-	//if err != nil {
-	//	return nil, fuse.ToStatus(err)
-	//}
-	//want := 500
 	output := make([]fuse.DirEntry, 0)
-	//for {
-	//	infos, err := f.Readdir(want)
-	//	for i := range infos {
-	//		// workaround forhttps://code.google.com/p/go/issues/detail?id=5960
-	//		if infos[i] == nil {
-	//			continue
-	//		}
-	//		n := infos[i].Name()
-	//		d := fuse.DirEntry{
-	//			Name: n,
-	//		}
-	//		if s := fuse.ToStatT(infos[i]); s != nil {
-	//			d.Mode = uint32(s.Mode)
-	//		} else {
-	//			log.Printf("ReadDir entry %q for %q has no stat info", n, name)
-	//		}
-	//		output = append(output, d)
-	//	}
-	//	if len(infos) < want || err == io.EOF {
-	//		break
-	//	}
-	//	if err != nil {
-	//		log.Println("Readdir() returned err:", err)
-	//		break
-	//	}
-	//}
-	//f.Close()
-
 	for _, foundQuery := range foundQueries {
 		d := fuse.DirEntry{
 			Name: ConvertToString(foundQuery.querykeyValue),
