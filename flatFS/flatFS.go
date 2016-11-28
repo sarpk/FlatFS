@@ -24,6 +24,7 @@ type DBMiddleware interface {
 type HelloFs struct {
 	pathfs.FileSystem
 	attrMapper AttrMapper
+	flatStorage string
 }
 
 type MockMiddleware struct {
@@ -222,7 +223,7 @@ func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file 
 }
 
 func (me *HelloFs) GetPath(relPath string) string {
-	return filepath.Join("/tmp/firstDir", relPath)
+	return filepath.Join(me.flatStorage, relPath)
 }
 
 func (me *HelloFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
@@ -303,14 +304,15 @@ func Prepare() {
 func Start() {
 	Prepare()
 	flag.Parse()
-	if len(flag.Args()) < 1 {
-		log.Fatal("Usage:\n  hello MOUNTPOINT")
+	if len(flag.Args()) < 3 {
+		log.Fatal("Usage:\n  FlatFS MOUNTPOINT FLATSTORAGE [backend] \n  [backend] can be 'default' (in memory) or 'sqlite' ")
 	}
-	attrMapperFromManager:= AttrMapperManagerInjector.Get("default")
+	attrMapperFromManager:= AttrMapperManagerInjector.Get(flag.Arg(2))
 	defer attrMapperFromManager.Close()
 	helloFs := &HelloFs{
 		FileSystem: pathfs.NewDefaultFileSystem(),
 		attrMapper: attrMapperFromManager,
+		flatStorage: flag.Arg(1),
 	}
 	nfs := pathfs.NewPathNodeFs(helloFs, nil)
 	nfs.SetDebug(true)
