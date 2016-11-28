@@ -302,8 +302,6 @@ func Prepare() {
 
 func Start() {
 	Prepare()
-	testFunc()
-	testFunc()
 	flag.Parse()
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage:\n  hello MOUNTPOINT")
