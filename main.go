@@ -3,7 +3,7 @@
 package main
 
 import (
-	"./first"
+	"github.com/sarpk/FlatFS/first"
 )
 
 func main() {
