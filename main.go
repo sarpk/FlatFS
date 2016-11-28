@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	flatFS.Start()
+	FlatFS.Start()
 }
