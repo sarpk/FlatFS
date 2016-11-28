@@ -1,6 +1,6 @@
 // Attribute mapper manager for dependency injection
 
-package first
+package FlatFS
 
 import (
 	"log"

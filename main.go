@@ -3,9 +3,9 @@
 package main
 
 import (
-	"github.com/sarpk/FlatFS/first"
+	"github.com/sarpk/FlatFS/flatFS"
 )
 
 func main() {
-	first.Start()
+	flatFS.Start()
 }

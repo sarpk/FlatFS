@@ -1,6 +1,4 @@
-// A Go mirror of libfuse's hello.c
-
-package first
+package FlatFS
 
 import (
 	"flag"

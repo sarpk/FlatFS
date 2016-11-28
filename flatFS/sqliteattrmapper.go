@@ -1,6 +1,6 @@
 // SQLite attribute mapper
 
-package first
+package FlatFS
 
 import (
 	"log"
