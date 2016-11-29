@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"log"
 	"fmt"
-	"sync"
 	"strings"
 	"os/exec"
 	"github.com/sarpk/FlatFS/flatFS"
 	"time"
 	"path"
+	"io/ioutil"
 )
 
 func GetCurrentDir() string {
@@ -49,20 +49,45 @@ func CreateFlatFS() string {
 }
 
 func Terminate(mountPointDir string) {
-	exec_cmd("fusermount -u " + mountPointDir, nil)
+	time.Sleep(time.Second * 2) // wait 2 secs to finish
+	exec_cmd("fusermount -u " + mountPointDir)
 }
 
-func exec_cmd(cmd string, wg *sync.WaitGroup) {
+func exec_cmd(cmd string) {
 	fmt.Println("command is ", cmd)
 	// splitting head => g++ parts => rest of the command
 	parts := strings.Fields(cmd)
 	head := parts[0]
 	parts = parts[1:len(parts)]
-
+	fmt.Println("parts are  ", parts)
 	out, err := exec.Command(head, parts...).Output()
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Printf("err is %s \n", err)
 	}
 	fmt.Printf("out is %s \n", out)
-	//wg.Done() // Need to signal to waitgroup that this goroutine is done
+}
+
+func write_to_file(filePath, text string) {
+	fmt.Println("Creating this file ", filePath)
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+
+	if _, err = f.WriteString(text); err != nil {
+		panic(err)
+	}
+}
+
+func read_from_file(filePath string) string {
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		//Do something
+	}
+	fmt.Println("File content is ", string(content))
+	return string(content)
+
+	//Not working
 }
