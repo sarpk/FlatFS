@@ -28,6 +28,7 @@ func Start() {
 	Prepare()
 	flag.Parse()
 	if len(flag.Args()) < 3 {
+		log.Print("Given flags are: ", flag.Args())
 		log.Fatal("Usage:\n  FlatFS MOUNTPOINT FLATSTORAGE [backend] \n  [backend] can be 'default' (in memory) or 'sqlite' ")
 	}
 	attrMapperFromManager:= AttrMapperManagerInjector.Get(flag.Arg(2))
