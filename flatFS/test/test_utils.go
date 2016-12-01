@@ -86,8 +86,11 @@ func read_from_file(filePath string) string {
 	if err != nil {
 		//Do something
 	}
+	fmt.Println("File content is ", content)
 	fmt.Println("File content is ", string(content))
-	return string(content)
+	content2, err := ioutil.ReadFile(filePath) //For some reason first read in test doesn't work
+	//TODO investigate why it doesn't read in 1st time
+	fmt.Println("File content is ", string(content2))
 
-	//Not working
+	return string(content2)
 }
