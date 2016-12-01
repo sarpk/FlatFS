@@ -13,6 +13,7 @@ import (
 	"time"
 	"path"
 	"io/ioutil"
+	"testing"
 )
 
 func GetCurrentDir() string {
@@ -53,7 +54,7 @@ func Terminate(mountPointDir string) {
 	exec_cmd("fusermount -u " + mountPointDir)
 }
 
-func exec_cmd(cmd string) {
+func exec_cmd(cmd string) string {
 	fmt.Println("command is ", cmd)
 	// splitting head => g++ parts => rest of the command
 	parts := strings.Fields(cmd)
@@ -65,6 +66,7 @@ func exec_cmd(cmd string) {
 		fmt.Printf("err is %s \n", err)
 	}
 	fmt.Printf("out is %s \n", out)
+	return string(out)
 }
 
 func write_to_file(filePath, text string) {
@@ -93,4 +95,16 @@ func read_from_file(filePath string) string {
 	fmt.Println("File content is ", string(content2))
 
 	return string(content2)
+}
+
+func assert_string_equals(str1, str2 string, t *testing.T) {
+	if !strings.EqualFold(str1, str2) {
+		t.Fail()
+	}
+}
+
+func assert_string_contains(str1, str2 string, t *testing.T) {
+	if !strings.Contains(str1, str2) {
+		t.Fail()
+	}
 }
