@@ -145,13 +145,6 @@ func (attrMapper *MemAttrMapper) ReturnEqualAttributeResult(uniqueVal map[string
 	return "", false
 }
 
-func ReturnFirstForMap(uniqueVal map[string]bool) (string, bool) {
-	for uniqueUuid := range uniqueVal {
-		return uniqueUuid, true
-	}
-	return "", false
-}
-
 func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool) {
 	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
 	if !found {
