@@ -71,21 +71,21 @@ func ParseQuery(raw string) (*QueryKeyValue, bool) {
 	return query, isFile
 }
 
-func (me *FlatFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
-	uuid, fileFound := me.attrMapper.GetAddedUUID(parsedQuery, true)
+func (flatFs *FlatFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
+	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, true)
 	if !fileFound {
 		return fuse.ENODATA;
 	}
-	fullPath := me.GetPath(uuid)
+	fullPath := flatFs.GetPath(uuid)
 	deleteStatus := fuse.ToStatus(syscall.Unlink(fullPath))
 	if deleteStatus == fuse.OK {
-		me.attrMapper.DeleteUUIDFromQuery(parsedQuery, uuid)
+		flatFs.attrMapper.DeleteUUIDFromQuery(parsedQuery, uuid)
 	}
 	return deleteStatus
 }
 
-func (me *FlatFs) GetPath(relPath string) string {
-	return filepath.Join(me.flatStorage, relPath)
+func (flatFs *FlatFs) GetPath(relPath string) string {
+	return filepath.Join(flatFs.flatStorage, relPath)
 }
 
 func ConvertToString(query QueryKeyValue) string {
@@ -101,8 +101,8 @@ func ConvertToString(query QueryKeyValue) string {
 }
 
 
-func (me *FlatFs) GetFileInfoFromUUID(uuid string) os.FileInfo {
-	file, oErr := os.Open(me.GetPath(uuid))
+func (flatFs *FlatFs) GetFileInfoFromUUID(uuid string) os.FileInfo {
+	file, oErr := os.Open(flatFs.GetPath(uuid))
 	if oErr != nil {
 		return nil
 	}

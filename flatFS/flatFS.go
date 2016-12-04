@@ -16,14 +16,14 @@ type FlatFs struct {
 	flatStorage string
 }
 
-func (me *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
+func (flatFs *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
 	log.Printf("GetAttr for name is %s", name)
 	//fullPath :=
-	fullPath, fileFound := me.attrMapper.GetAddedUUID(ParseQuery(name))
+	fullPath, fileFound := flatFs.attrMapper.GetAddedUUID(ParseQuery(name))
 	if !fileFound {
 		fullPath = name
 	}
-	fullPath = me.GetPath(fullPath)
+	fullPath = flatFs.GetPath(fullPath)
 	log.Printf("Found path is  %s", fullPath)
 	var err error = nil
 	st := syscall.Stat_t{}
@@ -43,24 +43,24 @@ func (me *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, cod
 	return a, fuse.OK
 }
 
-func (me *FlatFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {
+func (flatFs *FlatFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {
 	log.Printf("Renaming %s to %s", oldName, newName)
 	oldSpec, _ := ParseQuery(oldName)
 	newSpec, isNewSpecAFile := ParseQuery(newName)
 	if !isNewSpecAFile {
-		me.attrMapper.AppendOldSpec(oldSpec, newSpec, me)
+		flatFs.attrMapper.AppendOldSpec(oldSpec, newSpec, flatFs)
 	} else {
-		me.attrMapper.RenameQuery(oldSpec, newSpec, me)
+		flatFs.attrMapper.RenameQuery(oldSpec, newSpec, flatFs)
 	}
 	return fuse.OK
 }
 
-func (me *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
+func (flatFs *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	log.Printf("opendira name is %s", name)
 	parsedQuery, _ := ParseQuery(name)
-	foundQueries, fileFound := me.attrMapper.FindAllMatchingQueries(parsedQuery)
+	foundQueries, fileFound := flatFs.attrMapper.FindAllMatchingQueries(parsedQuery)
 	if !fileFound {
-		_, err := os.Open(me.GetPath(name))
+		_, err := os.Open(flatFs.GetPath(name))
 		return nil, fuse.ToStatus(err)
 	}
 
@@ -72,7 +72,7 @@ func (me *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry
 		d := fuse.DirEntry{
 			Name: ConvertToString(foundQuery.querykeyValue),
 		}
-		if s := fuse.ToStatT(me.GetFileInfoFromUUID(foundQuery.uuid)); s != nil {
+		if s := fuse.ToStatT(flatFs.GetFileInfoFromUUID(foundQuery.uuid)); s != nil {
 			d.Mode = uint32(s.Mode)
 		}
 		output = append(output, d)
@@ -82,10 +82,10 @@ func (me *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry
 }
 
 
-func (me *FlatFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
+func (flatFs *FlatFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("open namea is %s", name)
-	name, _ = me.attrMapper.GetAddedUUID(ParseQuery(name))
-	f, err := os.OpenFile(me.GetPath(name), int(flags), 0)
+	name, _ = flatFs.attrMapper.GetAddedUUID(ParseQuery(name))
+	f, err := os.OpenFile(flatFs.GetPath(name), int(flags), 0)
 	if err != nil {
 		return nil, fuse.ToStatus(err)
 	}
@@ -93,24 +93,24 @@ func (me *FlatFs) Open(name string, flags uint32, context *fuse.Context) (file n
 
 }
 
-func (me *FlatFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
+func (flatFs *FlatFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
 	parsedQuery, isFile := ParseQuery(name)
 	if !isFile {
 		return fuse.EINVAL;
 	}
-	return me.UnlinkParsedQuery(parsedQuery)
+	return flatFs.UnlinkParsedQuery(parsedQuery)
 }
 
-func (me *FlatFs) Mkdir(path string, mode uint32, context *fuse.Context) (code fuse.Status) {
-	return fuse.ToStatus(os.Mkdir(me.GetPath(path), os.FileMode(mode)))
+func (flatFs *FlatFs) Mkdir(path string, mode uint32, context *fuse.Context) (code fuse.Status) {
+	return fuse.ToStatus(os.Mkdir(flatFs.GetPath(path), os.FileMode(mode)))
 }
 
-func (me *FlatFs) CreateWithNewPath(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status, newPath string) {
+func (flatFs *FlatFs) CreateWithNewPath(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status, newPath string) {
 	log.Printf("create file name is %s", name)
 	parsedQuery, _ := ParseQuery(name)
-	newPath = me.attrMapper.CreateFromQuery(parsedQuery)
+	newPath = flatFs.attrMapper.CreateFromQuery(parsedQuery)
 	log.Printf("Saving the file name as %s", newPath)
-	f, err := os.OpenFile(me.GetPath(newPath), int(flags) | os.O_CREATE, os.FileMode(mode))
+	f, err := os.OpenFile(flatFs.GetPath(newPath), int(flags) | os.O_CREATE, os.FileMode(mode))
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err), newPath
 }
 
