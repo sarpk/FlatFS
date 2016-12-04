@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"bytes"
 )
+
 var (
 	AttrMapperManagerInjector AttrMapperManager
 )
@@ -31,7 +32,7 @@ func Start() {
 		log.Print("Given flags are: ", flag.Args())
 		log.Fatal("Usage:\n  FlatFS MOUNTPOINT FLATSTORAGE [backend] \n  [backend] can be 'default' (in memory) or 'sqlite' ")
 	}
-	attrMapperFromManager:= AttrMapperManagerInjector.Get(flag.Arg(2))
+	attrMapperFromManager := AttrMapperManagerInjector.Get(flag.Arg(2))
 	defer attrMapperFromManager.Close()
 	flatFs := &FlatFs{
 		FileSystem: pathfs.NewDefaultFileSystem(),
@@ -48,7 +49,6 @@ func Start() {
 	server.Serve()
 }
 
-
 func NewQueryKeyValue() *QueryKeyValue {
 	return &QueryKeyValue{
 		keyValue: make(map[string]string, 0),
@@ -57,7 +57,7 @@ func NewQueryKeyValue() *QueryKeyValue {
 
 func ParseQuery(raw string) (*QueryKeyValue, bool) {
 	isFile := true
-	if strings.IndexByte(raw, '?') == 0  {
+	if strings.IndexByte(raw, '?') == 0 {
 		isFile = false
 		raw = raw[1:]
 	}
@@ -69,6 +69,14 @@ func ParseQuery(raw string) (*QueryKeyValue, bool) {
 		}
 	}
 	return query, isFile
+}
+
+func (flatFs *FlatFs) OpenFileAsLoopback(fileName string, flags int) (file nodefs.File, code fuse.Status) {
+	f, err := os.OpenFile(flatFs.GetPath(fileName), flags, 0)
+	if err != nil {
+		return nil, fuse.ToStatus(err)
+	}
+	return nodefs.NewLoopbackFile(f), fuse.OK
 }
 
 func (flatFs *FlatFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
@@ -99,7 +107,6 @@ func ConvertToString(query QueryKeyValue) string {
 	}
 	return result.String()
 }
-
 
 func (flatFs *FlatFs) GetFileInfoFromUUID(uuid string) os.FileInfo {
 	file, oErr := os.Open(flatFs.GetPath(uuid))

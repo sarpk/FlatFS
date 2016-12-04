@@ -71,7 +71,7 @@ func exec_cmd(cmd string) string {
 
 func write_to_file(filePath, text string) {
 	fmt.Println("Creating this file ", filePath)
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	f, err := os.OpenFile(filePath, os.O_APPEND | os.O_WRONLY | os.O_CREATE, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -88,13 +88,7 @@ func read_from_file(filePath string) string {
 	if err != nil {
 		//Do something
 	}
-	fmt.Println("File content is ", content)
-	fmt.Println("File content is ", string(content))
-	content2, err := ioutil.ReadFile(filePath) //For some reason first read in test doesn't work
-	//TODO investigate why it doesn't read in 1st time
-	fmt.Println("File content is ", string(content2))
-
-	return string(content2)
+	return string(content)
 }
 
 func assert_string_equals(str1, str2 string, t *testing.T) {

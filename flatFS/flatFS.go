@@ -8,11 +8,12 @@ import (
 	"github.com/sarpk/go-fuse/fuse/pathfs"
 	"os"
 	"syscall"
+	"github.com/nu7hatch/gouuid"
 )
 
 type FlatFs struct {
 	pathfs.FileSystem
-	attrMapper AttrMapper
+	attrMapper  AttrMapper
 	flatStorage string
 }
 
@@ -81,16 +82,15 @@ func (flatFs *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 	return output, fuse.OK
 }
 
-
 func (flatFs *FlatFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("open namea is %s", name)
-	name, _ = flatFs.attrMapper.GetAddedUUID(ParseQuery(name))
-	f, err := os.OpenFile(flatFs.GetPath(name), int(flags), 0)
-	if err != nil {
-		return nil, fuse.ToStatus(err)
+	_, parseError := uuid.ParseHex(name)
+	if parseError == nil {
+		//It's a valid UUID so just parse that
+		return flatFs.OpenFileAsLoopback(name, int(flags))
 	}
-	return nodefs.NewLoopbackFile(f), fuse.OK
-
+	name, _ = flatFs.attrMapper.GetAddedUUID(ParseQuery(name))
+	return flatFs.OpenFileAsLoopback(name, int(flags))
 }
 
 func (flatFs *FlatFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
