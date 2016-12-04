@@ -8,6 +8,7 @@ import (
 	"github.com/sarpk/go-fuse/fuse/pathfs"
 	"os"
 	"syscall"
+	"io/ioutil"
 )
 
 type FlatFs struct {
@@ -85,12 +86,25 @@ func (flatFs *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 func (flatFs *FlatFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	log.Printf("open namea is %s", name)
 	name, _ = flatFs.attrMapper.GetAddedUUID(ParseQuery(name))
-	f, err := os.OpenFile(flatFs.GetPath(name), int(flags), 0)
+	filePath := flatFs.GetPath(name)
+	f, err := os.OpenFile(filePath, int(flags), 0)
 	if err != nil {
 		return nil, fuse.ToStatus(err)
 	}
-	return nodefs.NewLoopbackFile(f), fuse.OK
-
+	syncErr := f.Sync()
+	if syncErr != nil {
+		return nil, fuse.ToStatus(err)
+	}
+	//nodefs.NewDataFile(f)
+	rdByte, err := ioutil.ReadFile(filePath)
+	file = nodefs.NewLoopbackFile(f)
+	return nodefs.NewDataFile(rdByte), fuse.OK
+	//file, code = flatFs.FileSystem.Open(name,flags,context)
+	//if file != nil {
+	//	return nil, fuse.ToStatus(err)
+	//}
+	//return
+	//return nodefs.NewLoopbackFile(f), fuse.OK
 }
 
 func (flatFs *FlatFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
