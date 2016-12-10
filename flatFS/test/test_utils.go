@@ -14,6 +14,7 @@ import (
 	"path"
 	"io/ioutil"
 	"testing"
+	"bytes"
 )
 
 func GetCurrentDir() string {
@@ -96,6 +97,30 @@ func assert_string_equals(str1, str2 string, t *testing.T) {
 		fmt.Printf("Failing because %s and %s not equal \n", str1, str2)
 		t.Fail()
 	}
+}
+
+func assert_string_contains_per_line(multiLine string, arr[] string, t *testing.T) string {
+	fail := true
+	var result bytes.Buffer
+	for _, str1 := range strings.Split(multiLine, "\n") {
+		numToDecrease := len(arr)
+		for _, str2 := range arr {
+			if strings.Contains(str1, str2) {
+				numToDecrease--
+			}
+		}
+		if numToDecrease == 0 {
+			fail = false
+		} else {
+			result.WriteString(str1)
+		}
+	}
+
+	if fail {
+		fmt.Printf("Failing because %s is not included in %s  \n", multiLine, arr)
+		t.Fail()
+	}
+	return result.String()
 }
 
 func assert_string_contains(str1, str2 string, t *testing.T) {
