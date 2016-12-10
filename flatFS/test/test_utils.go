@@ -93,12 +93,21 @@ func read_from_file(filePath string) string {
 
 func assert_string_equals(str1, str2 string, t *testing.T) {
 	if !strings.EqualFold(str1, str2) {
+		fmt.Printf("Failing because %s and %s not equal \n", str1, str2)
 		t.Fail()
 	}
 }
 
 func assert_string_contains(str1, str2 string, t *testing.T) {
 	if !strings.Contains(str1, str2) {
+		fmt.Printf("Failing because %s is not included in %s  \n", str1, str2)
+		t.Fail()
+	}
+}
+
+func assert_string_not_contains(str1, str2 string, t *testing.T) {
+	if strings.Contains(str1, str2) {
+		fmt.Printf("Failing because %s is included in %s  \n", str1, str2)
 		t.Fail()
 	}
 }
