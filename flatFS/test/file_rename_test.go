@@ -39,3 +39,38 @@ func TestSingleFileRename(t *testing.T) {
 
 	Terminate(mountPoint)
 }
+
+func TestOverwriteFileRename(t *testing.T) {
+	mountPoint := CreateFlatFS()
+	testContent1 := "Test Content"
+	testContent2 := "Another File Content"
+
+	attr1 := "foo=hello"
+	attr2 := "bar=world"
+	attr3 := "flat=fs"
+
+	exactPath1 := path.Join(mountPoint, attr1 + "," + attr2)
+	exactPath2 := path.Join(mountPoint, attr2 + "," + attr3)
+
+	write_to_file(exactPath1, testContent1)
+	write_to_file(exactPath2, testContent2)
+	time.Sleep(time.Second * 1) // TODO fix this wait period!
+	exec_cmd("mv " + exactPath1 + " " + exactPath2)
+	time.Sleep(time.Second * 1) // TODO fix this wait period!
+	fileContent := read_from_file(exactPath2)
+	assert_string_equals(fileContent, testContent1, t)
+
+	lsContent := exec_cmd("ls -l " + exactPath1)
+	assert_string_not_contains(lsContent, attr1, t)
+	assert_string_not_contains(lsContent, attr2, t)
+	assert_string_not_contains(lsContent, attr3, t)
+
+	lsContent = exec_cmd("ls -l " + exactPath2)
+	lsContent = assert_string_contains_per_line(lsContent, []string{attr2, attr3}, t)
+	assert_string_not_contains(lsContent, attr1, t)
+	assert_string_not_contains(lsContent, attr2, t)
+	assert_string_not_contains(lsContent, attr3, t)
+
+	Terminate(mountPoint)
+}
+
