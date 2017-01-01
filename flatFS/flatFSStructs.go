@@ -8,3 +8,11 @@ type UUIDToQuery struct {
 type QueryKeyValue struct {
 	keyValue map[string]string
 }
+
+type QueryType struct {
+	addSpec bool
+	querySpec bool
+	replaceSpec bool
+	deleteSpec bool
+	fileSpec bool
+}
