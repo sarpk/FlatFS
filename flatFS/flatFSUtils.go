@@ -55,20 +55,52 @@ func NewQueryKeyValue() *QueryKeyValue {
 	}
 }
 
-func ParseQuery(raw string) (*QueryKeyValue, bool) {
-	isFile := true
-	if strings.IndexByte(raw, '?') == 0 {
-		isFile = false
-		raw = raw[1:]
-	}
+func ParseQuery(raw string) (*QueryKeyValue, QueryType) {
+	handledQueryTypeRaw, queryType := handleQueryType(raw)
 	query := NewQueryKeyValue()
-	for _, kv := range strings.Split(raw, ",") {
+	for _, kv := range strings.Split(handledQueryTypeRaw, ",") {
 		pair := strings.Split(kv, "=")
 		if (len(pair) == 2) {
 			query.keyValue[pair[0]] = pair[1]
 		}
 	}
-	return query, isFile
+	return query, queryType
+}
+
+func handleQueryType(raw string) (string, QueryType) {
+	queryType := createQueryType()
+	if strings.IndexByte(raw, '?') == 0 {
+		raw = raw[1:]
+		queryType.querySpec = true
+	} else if strings.IndexByte(raw, '+') == 0 {
+		raw = raw[1:]
+		queryType.addSpec = true
+	} else if strings.IndexByte(raw, '-') == 0 {
+		raw = raw[1:]
+		queryType.deleteSpec = true
+	} else if strings.IndexByte(raw, '!') == 0 {
+		raw = raw[1:]
+		queryType.replaceSpec = true
+	} else {
+		queryType.fileSpec = true
+	}
+	return raw, queryType
+}
+
+func createFileSpecQueryType() QueryType {
+	queryType := createQueryType()
+	queryType.fileSpec = true
+	return queryType
+}
+
+func createQueryType() QueryType {
+	return QueryType{
+		addSpec: false,
+		querySpec: false,
+		replaceSpec: false,
+		deleteSpec: false,
+		fileSpec: false,
+	}
 }
 
 func (flatFs *FlatFs) OpenFileAsLoopback(fileName string, flags int) (file nodefs.File, code fuse.Status) {
@@ -80,7 +112,7 @@ func (flatFs *FlatFs) OpenFileAsLoopback(fileName string, flags int) (file nodef
 }
 
 func (flatFs *FlatFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
-	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, true)
+	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, createFileSpecQueryType())
 	if !fileFound {
 		return fuse.ENODATA;
 	}
