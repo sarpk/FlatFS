@@ -66,7 +66,7 @@ func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, 
 }
 
 func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
-	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, true)
+	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, createFileSpecQueryType())
 	if !found {
 		return
 	}
@@ -76,7 +76,7 @@ func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *Qu
 }
 
 func (attrMapper *MemAttrMapper) AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
-	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, true)
+	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, createFileSpecQueryType())
 	if !found {
 		return
 	}
@@ -145,7 +145,7 @@ func (attrMapper *MemAttrMapper) ReturnEqualAttributeResult(uniqueVal map[string
 	return "", false
 }
 
-func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool) {
+func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
 	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
 	if !found {
 		return "", false
@@ -164,7 +164,7 @@ func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFile 
 		return "", false //No unique UUID for the given query found
 	}
 
-	if !isFile {
+	if !queryType.fileSpec {
 		return "", true //It's a file or a directory
 	}
 
@@ -222,7 +222,7 @@ func (attrMapper *MemAttrMapper) Close() {
 
 func (attrMapper *MemAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
 	log.Println("Mocking middleware")
-	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, true)
+	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, createFileSpecQueryType())
 	if attributeAdded {
 		return uuidStr
 	}

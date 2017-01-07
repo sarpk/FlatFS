@@ -47,8 +47,8 @@ func (flatFs *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr,
 func (flatFs *FlatFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {
 	log.Printf("Renaming %s to %s", oldName, newName)
 	oldSpec, _ := ParseQuery(oldName)
-	newSpec, isNewSpecAFile := ParseQuery(newName)
-	if !isNewSpecAFile {
+	newSpec, queryType := ParseQuery(newName)
+	if !queryType.fileSpec {
 		flatFs.attrMapper.AppendOldSpec(oldSpec, newSpec, flatFs)
 	} else {
 		flatFs.attrMapper.RenameQuery(oldSpec, newSpec, flatFs)
@@ -94,8 +94,8 @@ func (flatFs *FlatFs) Open(name string, flags uint32, context *fuse.Context) (fi
 }
 
 func (flatFs *FlatFs) Unlink(name string, context *fuse.Context) (code fuse.Status) {
-	parsedQuery, isFile := ParseQuery(name)
-	if !isFile {
+	parsedQuery, querySpec := ParseQuery(name)
+	if !querySpec.fileSpec {
 		return fuse.EINVAL;
 	}
 	return flatFs.UnlinkParsedQuery(parsedQuery)

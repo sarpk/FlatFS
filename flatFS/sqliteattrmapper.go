@@ -186,7 +186,7 @@ func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bo
 	return queryBuf.String(), secondary, true
 }
 
-func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool) {
+func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
 	log.Println("Reading all entries")
 	log.Println(attrMapper.ReadEntry())
 
@@ -195,13 +195,13 @@ func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, isFi
 		log.Println("Built this query ", builtQuery)
 		results := attrMapper.ReadEntries2(builtQuery)
 		log.Println(results)
-		if len(results) == 0 && !isFile { //Definitely not a file, potentially could be a directory
+		if len(results) == 0 && !queryType.fileSpec { //Definitely not a file, potentially could be a directory
 			if strings.EqualFold(builtQuery, secondary) {
 				return "", false
 			}
 			results = attrMapper.ReadEntries2(secondary)
 		}
-		if !isFile && len(results) > 0 {
+		if !queryType.fileSpec && len(results) > 0 {
 			return "", true //It's a file or a directory
 		}
 		if len(results) < 2 {
@@ -227,7 +227,7 @@ func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
 func (attrMapper *SQLiteAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
 	log.Println("Not implemented")
 
-	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, true)
+	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, createFileSpecQueryType())
 	if attributeAdded {
 		return uuidStr
 	}

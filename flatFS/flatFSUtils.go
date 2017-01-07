@@ -87,6 +87,12 @@ func handleQueryType(raw string) (string, QueryType) {
 	return raw, queryType
 }
 
+func createFileSpecQueryType() QueryType {
+	queryType := createQueryType()
+	queryType.fileSpec = true
+	return queryType
+}
+
 func createQueryType() QueryType {
 	return QueryType{
 		addSpec: false,
@@ -106,7 +112,7 @@ func (flatFs *FlatFs) OpenFileAsLoopback(fileName string, flags int) (file nodef
 }
 
 func (flatFs *FlatFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
-	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, true)
+	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, createFileSpecQueryType())
 	if !fileFound {
 		return fuse.ENODATA;
 	}

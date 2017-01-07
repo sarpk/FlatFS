@@ -9,7 +9,7 @@ import (
 
 type AttrMapper interface {
 	CreateFromQuery(*QueryKeyValue) string
-	GetAddedUUID(attributes *QueryKeyValue, isFile bool) (string, bool)
+	GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool)
 	FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool)
 	RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs)
 	AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs)
