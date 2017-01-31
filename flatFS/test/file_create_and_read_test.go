@@ -10,8 +10,8 @@ import (
 func TestFileCreateAndRead(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "This is the test string"
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
 
 	write_to_file(exactPath, testContent)
@@ -27,9 +27,9 @@ func TestFileCreateAndRead(t *testing.T) {
 func TestFileCreateAndReadWithThreeAttrs(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "This is the test string"
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
 
 	write_to_file(exactPath, testContent)
@@ -46,9 +46,9 @@ func TestFileCreateAndReadWithThreeAttrs(t *testing.T) {
 func TestFileCreateAndReadWithThreeAttrsShuffleOrder(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "This is the test string"
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 	exactPath := path.Join(mountPoint, attr2 + "," + attr3 + "," + attr1)
 
 	write_to_file(exactPath, testContent)
@@ -67,9 +67,9 @@ func TestMultipleFileCreateAndRead(t *testing.T) {
 	testContent1 := "This is the test string"
 	testContent2 := "This is another file"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 	exactPath1 := path.Join(mountPoint, attr1 + "," + attr2)
 	exactPath2 := path.Join(mountPoint, attr2 + "," + attr3)
 
@@ -102,9 +102,9 @@ func TestMultipleFileCreateAndReadWithInclusiveAttributesLessOrder(t *testing.T)
 	testContent1 := "This is the test string"
 	testContent2 := "This is another file"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 	exactPath1 := path.Join(mountPoint, attr1 + "," + attr2)
 	exactPath2 := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
 
@@ -138,9 +138,9 @@ func TestMultipleFileCreateAndReadWithInclusiveAttributesHigherOrder(t *testing.
 	testContent1 := "This is the test string"
 	testContent2 := "This is another file"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 	exactPath1 := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
 	exactPath2 := path.Join(mountPoint, attr1 + "," + attr2)
 

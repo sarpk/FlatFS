@@ -59,7 +59,7 @@ func ParseQuery(raw string) (*QueryKeyValue, QueryType) {
 	handledQueryTypeRaw, queryType := handleQueryType(raw)
 	query := NewQueryKeyValue()
 	for _, kv := range strings.Split(handledQueryTypeRaw, ",") {
-		pair := strings.Split(kv, "=")
+		pair := strings.Split(kv, ":")
 		if (len(pair) == 2) {
 			query.keyValue[pair[0]] = pair[1]
 		}
@@ -135,7 +135,7 @@ func ConvertToString(query QueryKeyValue) string {
 			result.WriteString(",")
 
 		}
-		result.WriteString(fmt.Sprintf("%v=%v", key, value))
+		result.WriteString(fmt.Sprintf("%v:%v", key, value))
 	}
 	return result.String()
 }

@@ -10,8 +10,8 @@ import (
 func TestFileCreateAndListWithExactName(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "This is the test string"
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
 
 	write_to_file(exactPath, testContent)
@@ -25,8 +25,8 @@ func TestFileCreateAndListWithExactName(t *testing.T) {
 func TestFileCreateAndListWithFirstAttr(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "This is the test string"
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
 
 	write_to_file(exactPath, testContent)
@@ -40,8 +40,8 @@ func TestFileCreateAndListWithFirstAttr(t *testing.T) {
 func TestFileCreateAndListWithSecondAttr(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "This is the test string"
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
 
 	write_to_file(exactPath, testContent)
@@ -56,9 +56,9 @@ func TestMultipleFileCreateAndListWithSingularFileQuery(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "Test Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 	exactPath1 := path.Join(mountPoint, attr1 + "," + attr2)
 	exactPath2 := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
 	exactPath3 := path.Join(mountPoint, attr3)
@@ -107,9 +107,9 @@ func TestMultipleFileCreateAndListWithMultiFileQuery(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "Test Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	listDelim := "?"
 

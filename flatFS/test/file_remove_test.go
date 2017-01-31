@@ -11,9 +11,9 @@ func TestMultipleFileCreateAndRemove(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "Test Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	listDelim := "?"
 

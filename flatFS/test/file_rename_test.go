@@ -12,9 +12,9 @@ func TestSingleFileRename(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "Test Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	initialFilePath := path.Join(mountPoint, attr1 + "," + attr2)
 	movedFilePath := path.Join(mountPoint, attr3 + "," + attr2)
@@ -45,9 +45,9 @@ func TestOverwriteFileRename(t *testing.T) {
 	testContent1 := "Test Content"
 	testContent2 := "Another File Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	exactPath1 := path.Join(mountPoint, attr1 + "," + attr2)
 	exactPath2 := path.Join(mountPoint, attr2 + "," + attr3)
@@ -78,9 +78,9 @@ func TestRenameExistingFileToASpec(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent := "Test Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	addSpec := "?"
 
@@ -117,9 +117,9 @@ func TestRenameExistingFileToASpecWhereAFileExists(t *testing.T) {
 	testContent1 := "Test Content"
 	testContent2 := "This file should no longer exist"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	addSpec := "?"
 
@@ -158,9 +158,9 @@ func TestRenameExistingQueryWithAReplaceSpec(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent1 := "Test Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	addSpec := "?"
 	replaceSpec := "!"
@@ -199,9 +199,9 @@ func TestRenameExistingQueryWithAReplaceSpecWhenFileExists(t *testing.T) {
 	testContent1 := "Test Content"
 	testContent2 := "This file should no longer exist"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	addSpec := "?"
 	replaceSpec := "!"
@@ -242,9 +242,9 @@ func TestRenameExistingQueryWithADeleteSpec(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent1 := "Test Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	addSpec := "?"
 	deleteSpec := "-"
@@ -283,9 +283,9 @@ func TestRenameExistingQueryWithADeleteSpecWhenFileExists(t *testing.T) {
 	testContent1 := "Test Content"
 	testContent2 := "This file should no longer exist"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	addSpec := "?"
 	deleteSpec := "-"
@@ -327,9 +327,9 @@ func TestRenameExistingQueryWithAnAddSpec(t *testing.T) {
 	mountPoint := CreateFlatFS()
 	testContent1 := "Test Content"
 
-	attr1 := "foo=hello"
-	attr2 := "bar=world"
-	attr3 := "flat=fs"
+	attr1 := "foo:hello"
+	attr2 := "bar:world"
+	attr3 := "flat:fs"
 
 	addSpec := "?"
 	querySpec := "?"
