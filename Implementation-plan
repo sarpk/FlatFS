@@ -1,0 +1,43 @@
+FlatFS Implementation Plan
+==========================
+
+I. Proof-of-concept implementation (Go-FUSE)
+--------------------------------------------
+
+1. set of (non-abbreviated) attributes
+   a. single-valued attributes                         DONE
+   b. open (e.g. touch 'a:1,b:2')                      DONE
+      (absolute specs only (no virtual dirs))
+   c. rename -- with deltaspecs and queryspecs         DONE
+   d. in-memory backend                                DONE
+   e. SQLite backend                                   DONE
+   f. noSQL backend
+   
+2. virtual directories
+   a. query anonymous VDs (e.g. ls '?a:1')             DONE
+   b. relative filespecs (e.g. cd '?a:1')
+   c. create named VDs (e.g. ln -l '#myvd' '?a:1')
+
+II. Limited Prototype implementation
+--------------------------------------------
+
+1. Add multivalued attributes ('a:1,a:2')
+2. Add Extended Model features
+   a. abbreviated attributes: file name + extension
+   b. abbreviated attributes: tags
+   
+III. Extended Prototype implementation
+--------------------------------------------
+
+1. Add FS protected attributes --> nonupdatable VDs
+   a. FS attributes 'userid', 'groupid'
+   b. FS attributes 'file size', 'creation date', ...
+
+2. Add protected, non-FS attribs --> transducers
+   a. transducers for major file types JPG, PDF, ...
+   
+3. Add disjunction,negation,wildcards (nonupdatable VDs)
+
+4. Import/Export FlatFS attributes to HFS xattrs
+
+5. Display VD containment graph
