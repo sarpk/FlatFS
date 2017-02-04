@@ -133,19 +133,14 @@ func TestRenameExistingFileToASpecWhereAFileExists(t *testing.T) {
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent2, t)
 	exec_cmd("mv " + exactPath + " " + specPath)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
+	time.Sleep(time.Second * 10) // TODO fix this wait period!
 	fileContent = read_from_file(newPath)
 	assert_string_equals(fileContent, testContent1, t)
 
 	fileContent = read_from_file(exactPath)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
-	lsContent := exec_cmd("ls -l " + exactPath)
-	assert_string_not_contains(lsContent, attr1, t)
-	assert_string_not_contains(lsContent, attr2, t)
-	assert_string_not_contains(lsContent, attr3, t)
-
-	lsContent = exec_cmd("ls -l " + newPath)
+	lsContent := exec_cmd("ls -l " + newPath)
 	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr2, attr3}, t)
 	assert_string_not_contains(lsContent, attr1, t)
 	assert_string_not_contains(lsContent, attr2, t)

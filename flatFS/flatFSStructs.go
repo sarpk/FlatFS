@@ -15,4 +15,5 @@ type QueryType struct {
 	replaceSpec bool
 	deleteSpec bool
 	fileSpec bool
+	emptyType bool
 }

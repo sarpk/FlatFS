@@ -17,18 +17,52 @@ type FlatFs struct {
 	flatStorage string
 }
 
+func (flatFs *FlatFs) GetAttrWithPath(path, fileName string, context *fuse.Context) (*fuse.Attr, fuse.Status, string) {
+	log.Printf("GetAttrWithPath for path is %s and name is %s", path, fileName)
+	pathQuery, pathQueryType := ParseQuery(path)
+	fileNameQuery, fileNameQueryType := ParseQuery(fileName)
+	if (QueryOrAdd(pathQueryType) || QueryOrAdd(fileNameQueryType)) {
+		for k, v := range pathQuery.keyValue {
+			fileNameQuery.keyValue[k] = v
+		}
+		log.Printf("PathQuery keyvalue is %v", pathQuery.keyValue)
+		log.Printf("fileNameQuery keyvalue is %v", fileNameQuery.keyValue)
+	}
+	fullPath := ConvertToString(*fileNameQuery)
+	if (pathQueryType.fileSpec || fileNameQueryType.fileSpec) {
+		attr, code := flatFs.GetAttr(fullPath, context)
+		return attr, code, fullPath
+	} else if QueryOrAdd(pathQueryType) {
+		attr, code := flatFs.GetAttr(path, context)
+		return attr, code, fullPath
+	} else if QueryOrAdd(fileNameQueryType) {
+		attr, code := flatFs.GetAttr(fileName, context)
+		return attr, code, fullPath
+	}
+
+	attr, code := flatFs.AttrStatHandle(fullPath, fullPath, fileNameQueryType)
+	return attr, code, fullPath
+}
+
 func (flatFs *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
 	log.Printf("GetAttr for name is %s", name)
 	//fullPath :=
-	fullPath, fileFound := flatFs.attrMapper.GetAddedUUID(ParseQuery(name))
+	parsedQueryPath, queryType := ParseQuery(name)
+	fullPath, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQueryPath, queryType)
 	if !fileFound {
 		fullPath = name
 	}
 	fullPath = flatFs.GetPath(fullPath)
 	log.Printf("Found path is  %s", fullPath)
+	return flatFs.AttrStatHandle(name, fullPath, queryType)
+
+}
+
+func (FlatFs *FlatFs) AttrStatHandle(originalPath, fullPath string, queryType QueryType) (*fuse.Attr, fuse.Status) {
 	var err error = nil
 	st := syscall.Stat_t{}
-	if name == "" {
+	if originalPath == "" || !queryType.fileSpec {
+		//also check if type is file
 		// When GetAttr is called for the toplevel directory, we always want
 		// to look through symlinks.
 		err = syscall.Stat(fullPath, &st)
@@ -39,9 +73,22 @@ func (flatFs *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr,
 	if err != nil {
 		return nil, fuse.ToStatus(err)
 	}
-	a = &fuse.Attr{}
+	a := &fuse.Attr{}
 	a.FromStat(&st)
 	return a, fuse.OK
+}
+
+func (flatFs *FlatFs) RenameWithNewPath(oldName string, newPath, newName string, context *fuse.Context) fuse.Status {
+	log.Printf("RenameWithNewPath %s to path %s and name %s", oldName, newPath, newName)
+	newPathQuery, newPathqueryType := ParseQuery(newPath)
+	if QueryOrAdd(newPathqueryType) {
+		newNameQuery, _ := ParseQuery(newName)
+		for k, v := range newPathQuery.keyValue {
+			newNameQuery.keyValue[k] = v
+		}
+		newName = ConvertToString(*newNameQuery)
+	}
+	return flatFs.Rename(oldName, newName, context)
 }
 
 func (flatFs *FlatFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {

@@ -69,7 +69,10 @@ func ParseQuery(raw string) (*QueryKeyValue, QueryType) {
 
 func handleQueryType(raw string) (string, QueryType) {
 	queryType := createQueryType()
-	if strings.IndexByte(raw, '?') == 0 {
+
+	if len(raw) == 0 {
+		queryType.emptyType = true
+	} else if strings.IndexByte(raw, '?') == 0 {
 		raw = raw[1:]
 		queryType.querySpec = true
 	} else if strings.IndexByte(raw, '+') == 0 {
@@ -100,6 +103,7 @@ func createQueryType() QueryType {
 		replaceSpec: false,
 		deleteSpec: false,
 		fileSpec: false,
+		emptyType: false,
 	}
 }
 
@@ -126,6 +130,10 @@ func (flatFs *FlatFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status 
 
 func (flatFs *FlatFs) GetPath(relPath string) string {
 	return filepath.Join(flatFs.flatStorage, relPath)
+}
+
+func QueryOrAdd(queryType QueryType) bool {
+	return queryType.addSpec || queryType.querySpec
 }
 
 func ConvertToString(query QueryKeyValue) string {
