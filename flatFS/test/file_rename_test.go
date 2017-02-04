@@ -20,7 +20,7 @@ func TestSingleFileRename(t *testing.T) {
 	movedFilePath := path.Join(mountPoint, attr3 + "," + attr2)
 
 	write_to_file(initialFilePath, testContent)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
+	time.Sleep(time.Second * 2) // TODO fix this wait period!
 	exec_cmd("mv " + initialFilePath + " " + movedFilePath)
 
 	fileContent := read_from_file(movedFilePath)
@@ -56,7 +56,7 @@ func TestOverwriteFileRename(t *testing.T) {
 	write_to_file(exactPath2, testContent2)
 	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	exec_cmd("mv " + exactPath1 + " " + exactPath2)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
+	time.Sleep(time.Second * 3) // TODO fix this wait period!
 	fileContent := read_from_file(exactPath2)
 	assert_string_equals(fileContent, testContent1, t)
 
@@ -249,13 +249,8 @@ func TestRenameExistingQueryWithADeleteSpec(t *testing.T) {
 	fileContent = read_from_file(exactPath)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
-	lsContent := exec_cmd("ls -l " + exactPath)
-	assert_string_not_contains(lsContent, attr1, t)
-	assert_string_not_contains(lsContent, attr2, t)
-	assert_string_not_contains(lsContent, attr3, t)
-
-	lsContent = exec_cmd("ls -l " + newPath)
-	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr2, attr3}, t)
+	lsContent := exec_cmd("ls -l " + newPath)
+	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr2}, t)
 	assert_string_not_contains(lsContent, attr1, t)
 	assert_string_not_contains(lsContent, attr2, t)
 	assert_string_not_contains(lsContent, attr3, t)
@@ -293,13 +288,8 @@ func TestRenameExistingQueryWithADeleteSpecWhenFileExists(t *testing.T) {
 	fileContent = read_from_file(exactPath)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
-	lsContent := exec_cmd("ls -l " + exactPath)
-	assert_string_not_contains(lsContent, attr1, t)
-	assert_string_not_contains(lsContent, attr2, t)
-	assert_string_not_contains(lsContent, attr3, t)
-
-	lsContent = exec_cmd("ls -l " + newPath)
-	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr2, attr3}, t)
+	lsContent := exec_cmd("ls -l " + newPath)
+	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr2}, t)
 	assert_string_not_contains(lsContent, attr1, t)
 	assert_string_not_contains(lsContent, attr2, t)
 	assert_string_not_contains(lsContent, attr3, t)
