@@ -95,10 +95,34 @@ func (flatFs *FlatFs) RenameWithNewPath(oldName string, newPath, newName string,
 	if newNameQueryType.deleteSpec && QueryOrAdd(oldNameQueryType) {
 		return flatFs.DeleteSpecRenameHandle(context, oldName, oldNameQuery, newNameQuery)
 	}
+	if QueryOrAdd(newNameQueryType) && QueryOrAdd(oldNameQueryType) {
+		return flatFs.AddSpecRenameHandle(context, oldName, newNameQuery)
+	}
 
 	return flatFs.Rename(oldName, newName, context)
 }
 
+
+func (flatFs *FlatFs) AddSpecRenameHandle(context *fuse.Context, oldQuerySpec string, newNameQuery *QueryKeyValue) fuse.Status {
+	parsedQuery, _ := ParseQuery(oldQuerySpec)
+	foundQueries, fileFound := flatFs.attrMapper.FindAllMatchingQueries(parsedQuery)
+	if !fileFound {
+		_, err := os.Open(flatFs.GetPath(oldQuerySpec))
+		return fuse.ToStatus(err)
+	}
+
+	oldAndNewFileName := make(map[string]string, 0)
+
+	for _, query := range foundQueries {
+		oldName := ConvertToString(query.querykeyValue)
+		queryCopy, _ := ParseQuery(oldName) //easy copy
+		for k, v := range newNameQuery.keyValue {
+			queryCopy.keyValue[k] = v
+		}
+		oldAndNewFileName[oldName] = ConvertToString(*queryCopy)
+	}
+	return flatFs.BatchRename(oldAndNewFileName, context)
+}
 
 func (flatFs *FlatFs) DeleteSpecRenameHandle(context *fuse.Context, oldQuerySpec string, oldNameQuery, newNameQuery *QueryKeyValue) fuse.Status {
 	parsedQuery, _ := ParseQuery(oldQuerySpec)
