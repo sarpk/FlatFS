@@ -186,6 +186,13 @@ func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bo
 	return queryBuf.String(), secondary, true
 }
 
+func (attrMapper *SQLiteAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
+	for key, value := range attributes.keyValue {
+		deleteQuery := fmt.Sprintf("Delete FROM FileMetadata WHERE fileID='%v' AND attribute='%v' AND value='%v'", uuid, key, value)
+		attrMapper.ReadEntries2(deleteQuery)
+	}
+}
+
 func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
 	log.Println("Reading all entries")
 	log.Println(attrMapper.ReadEntry())
