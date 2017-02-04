@@ -158,7 +158,7 @@ func TestRenameExistingQueryWithAReplaceSpec(t *testing.T) {
 	attr3 := "flat:fs"
 
 	addSpec := "?"
-	replaceSpec := "!"
+	replaceSpec := "="
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
 	newPath := path.Join(mountPoint, attr1 + "," + attr3)
@@ -175,13 +175,8 @@ func TestRenameExistingQueryWithAReplaceSpec(t *testing.T) {
 	fileContent = read_from_file(exactPath)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
-	lsContent := exec_cmd("ls -l " + exactPath)
-	assert_string_not_contains(lsContent, attr1, t)
-	assert_string_not_contains(lsContent, attr2, t)
-	assert_string_not_contains(lsContent, attr3, t)
-
-	lsContent = exec_cmd("ls -l " + newPath)
-	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr2, attr3}, t)
+	lsContent := exec_cmd("ls -l " + newPath)
+	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr3}, t)
 	assert_string_not_contains(lsContent, attr1, t)
 	assert_string_not_contains(lsContent, attr2, t)
 	assert_string_not_contains(lsContent, attr3, t)
@@ -199,7 +194,7 @@ func TestRenameExistingQueryWithAReplaceSpecWhenFileExists(t *testing.T) {
 	attr3 := "flat:fs"
 
 	addSpec := "?"
-	replaceSpec := "!"
+	replaceSpec := "="
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
 	newPath := path.Join(mountPoint, attr1 + "," + attr3)
@@ -219,13 +214,8 @@ func TestRenameExistingQueryWithAReplaceSpecWhenFileExists(t *testing.T) {
 	fileContent = read_from_file(exactPath)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
-	lsContent := exec_cmd("ls -l " + exactPath)
-	assert_string_not_contains(lsContent, attr1, t)
-	assert_string_not_contains(lsContent, attr2, t)
-	assert_string_not_contains(lsContent, attr3, t)
-
-	lsContent = exec_cmd("ls -l " + newPath)
-	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr2, attr3}, t)
+	lsContent := exec_cmd("ls -l " + newPath)
+	lsContent = assert_string_contains_per_line(lsContent, []string{attr1, attr3}, t)
 	assert_string_not_contains(lsContent, attr1, t)
 	assert_string_not_contains(lsContent, attr2, t)
 	assert_string_not_contains(lsContent, attr3, t)

@@ -81,7 +81,7 @@ func handleQueryType(raw string) (string, QueryType) {
 	} else if strings.IndexByte(raw, '-') == 0 {
 		raw = raw[1:]
 		queryType.deleteSpec = true
-	} else if strings.IndexByte(raw, '!') == 0 {
+	} else if strings.IndexByte(raw, '=') == 0 {
 		raw = raw[1:]
 		queryType.replaceSpec = true
 	} else {

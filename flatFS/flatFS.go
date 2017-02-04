@@ -80,15 +80,50 @@ func (FlatFs *FlatFs) AttrStatHandle(originalPath, fullPath string, queryType Qu
 
 func (flatFs *FlatFs) RenameWithNewPath(oldName string, newPath, newName string, context *fuse.Context) fuse.Status {
 	log.Printf("RenameWithNewPath %s to path %s and name %s", oldName, newPath, newName)
-	newPathQuery, newPathqueryType := ParseQuery(newPath)
-	if QueryOrAdd(newPathqueryType) {
-		newNameQuery, _ := ParseQuery(newName)
+	newPathQuery, newPathQueryType := ParseQuery(newPath)
+	newNameQuery, newNameQueryType := ParseQuery(newName)
+	if QueryOrAdd(newPathQueryType) {
 		for k, v := range newPathQuery.keyValue {
 			newNameQuery.keyValue[k] = v
 		}
 		newName = ConvertToString(*newNameQuery)
 	}
+	oldNameQuery, oldNameQueryType := ParseQuery(oldName)
+	if newNameQueryType.replaceSpec && QueryOrAdd(oldNameQueryType) {
+
+		return flatFs.ReplaceSpecRenameHandle(context, oldName, oldNameQuery, newNameQuery)
+	}
+
 	return flatFs.Rename(oldName, newName, context)
+}
+
+func (flatFs *FlatFs) ReplaceSpecRenameHandle(context *fuse.Context, oldQuerySpec string, oldNameQuery, newNameQuery *QueryKeyValue) fuse.Status {
+	parsedQuery, _ := ParseQuery(oldQuerySpec)
+	foundQueries, fileFound := flatFs.attrMapper.FindAllMatchingQueries(parsedQuery)
+	if !fileFound {
+		_, err := os.Open(flatFs.GetPath(oldQuerySpec))
+		return fuse.ToStatus(err)
+	}
+
+	oldAndNewFileName := make(map[string]string, 0)
+
+	for _, query := range foundQueries {
+		oldName := ConvertToString(query.querykeyValue)
+		queryCopy, _ := ParseQuery(oldName) //easy copy
+		for oldKeyToDelete := range oldNameQuery.keyValue {
+			delete(queryCopy.keyValue, oldKeyToDelete)
+		}
+		for k, v := range newNameQuery.keyValue {
+			queryCopy.keyValue[k] = v
+		}
+		oldAndNewFileName[oldName] = ConvertToString(*queryCopy)
+	}
+
+	for oldName, newName := range oldAndNewFileName {
+		flatFs.Rename(oldName, newName, context)
+	}
+
+	return fuse.OK
 }
 
 func (flatFs *FlatFs) Rename(oldName string, newName string, context *fuse.Context) (code fuse.Status) {
