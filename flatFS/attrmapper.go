@@ -11,10 +11,29 @@ type AttrMapper interface {
 	CreateFromQuery(*QueryKeyValue) string
 	GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool)
 	FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool)
-	RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs)
-	AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs)
 	DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string)
 	Close()
+	AddQueryToUUID(key, value, uuid string)
+}
+
+func RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
+	uuidMatchingToFile, found := fs.attrMapper.GetAddedUUID(oldSpec, createFileSpecQueryType())
+	if !found {
+		return
+	}
+	fs.attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
+	fs.UnlinkParsedQuery(newSpec)
+	AddUUIDToAttributes(newSpec, fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
+}
+
+func  AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
+	uuidMatchingToFile, found := fs.attrMapper.GetAddedUUID(oldSpec, createFileSpecQueryType())
+	if !found {
+		return
+	}
+	fs.attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
+
+	AddUUIDToAttributes(AppendQueryKeyValue(oldSpec,newSpec), fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
 
 func AddUUIDToAttributes(attributes *QueryKeyValue, addQueryToUUID func(string, string, string), uuid string) {

@@ -184,9 +184,9 @@ func (flatFs *FlatFs) Rename(oldName string, newName string, context *fuse.Conte
 	oldSpec, _ := ParseQuery(oldName)
 	newSpec, queryType := ParseQuery(newName)
 	if !queryType.fileSpec {
-		flatFs.attrMapper.AppendOldSpec(oldSpec, newSpec, flatFs)
+		AppendOldSpec(oldSpec, newSpec, flatFs)
 	} else {
-		flatFs.attrMapper.RenameQuery(oldSpec, newSpec, flatFs)
+		RenameQuery(oldSpec, newSpec, flatFs)
 	}
 	return fuse.OK
 }

@@ -65,26 +65,6 @@ func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, 
 	}
 }
 
-func (attrMapper *MemAttrMapper) RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
-	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, createFileSpecQueryType())
-	if !found {
-		return
-	}
-	attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
-	fs.UnlinkParsedQuery(newSpec)
-	AddUUIDToAttributes(newSpec, attrMapper.AddQueryToUUID, uuidMatchingToFile)
-}
-
-func (attrMapper *MemAttrMapper) AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
-	uuidMatchingToFile, found := attrMapper.GetAddedUUID(oldSpec, createFileSpecQueryType())
-	if !found {
-		return
-	}
-	attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
-
-	AddUUIDToAttributes(AppendQueryKeyValue(oldSpec,newSpec), attrMapper.AddQueryToUUID, uuidMatchingToFile)
-}
-
 func AppendQueryKeyValue(toBeAppended *QueryKeyValue, toAppend *QueryKeyValue) *QueryKeyValue {
 	for key, value := range toAppend.keyValue {
 		toBeAppended.keyValue[key] = value
