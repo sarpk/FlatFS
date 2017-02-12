@@ -1,11 +1,8 @@
-// In memory attribute mapper
-
 package FlatFS
 
 import (
 	"testing"
 	"path"
-	"time"
 )
 
 func TestSingleFileRename(t *testing.T) {
@@ -20,7 +17,6 @@ func TestSingleFileRename(t *testing.T) {
 	movedFilePath := path.Join(mountPoint, attr3 + "," + attr2)
 
 	write_to_file(initialFilePath, testContent)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
 	exec_cmd("mv " + initialFilePath + " " + movedFilePath)
 
 	fileContent := read_from_file(movedFilePath)
@@ -54,9 +50,7 @@ func TestOverwriteFileRename(t *testing.T) {
 
 	write_to_file(exactPath1, testContent1)
 	write_to_file(exactPath2, testContent2)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	exec_cmd("mv " + exactPath1 + " " + exactPath2)
-	time.Sleep(time.Second * 3) // TODO fix this wait period!
 	fileContent := read_from_file(exactPath2)
 	assert_string_equals(fileContent, testContent1, t)
 
@@ -89,9 +83,7 @@ func TestRenameExistingFileToASpec(t *testing.T) {
 	specPath := path.Join(mountPoint, addSpec + attr3)
 
 	write_to_file(exactPath, testContent)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
 	exec_cmd("mv " + exactPath + " " + specPath)
-	time.Sleep(time.Second * 5) // TODO fix this wait period!
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent, t)
 
@@ -120,16 +112,15 @@ func TestRenameExistingFileToASpecWhereAFileExists(t *testing.T) {
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
 	newPath := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
+	newPathDiffOrder := path.Join(mountPoint, attr3 + "," + attr2 + "," + attr1)
 	specPath := path.Join(mountPoint, addSpec + attr3)
 
 	write_to_file(exactPath, testContent1)
 	write_to_file(newPath, testContent2)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent2, t)
 	exec_cmd("mv " + exactPath + " " + specPath)
-	time.Sleep(time.Second * 10) // TODO fix this wait period!
-	fileContent = read_from_file(newPath)
+	fileContent = read_from_file(newPathDiffOrder)
 	assert_string_equals(fileContent, testContent1, t)
 
 	fileContent = read_from_file(exactPath)
@@ -156,18 +147,17 @@ func TestRenameExistingQueryWithAReplaceSpec(t *testing.T) {
 	replaceSpec := "="
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
+	exactPathDiffOrder := path.Join(mountPoint, attr2 + "," + attr1)
 	newPath := path.Join(mountPoint, attr1 + "," + attr3)
 	addPath := path.Join(mountPoint, addSpec + attr2)
 	replacePath := path.Join(mountPoint, replaceSpec + attr3)
 
 	write_to_file(exactPath, testContent1)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	exec_cmd("mv " + addPath + " " + replacePath)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent1, t)
 
-	fileContent = read_from_file(exactPath)
+	fileContent = read_from_file(exactPathDiffOrder)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
 	lsContent := exec_cmd("ls -l " + newPath)
@@ -192,21 +182,21 @@ func TestRenameExistingQueryWithAReplaceSpecWhenFileExists(t *testing.T) {
 	replaceSpec := "="
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
+	exactPathDiffOrder := path.Join(mountPoint, attr2 + "," + attr1)
 	newPath := path.Join(mountPoint, attr1 + "," + attr3)
+	newPathDiffOrder := path.Join(mountPoint, attr3 + "," + attr1)
 	addPath := path.Join(mountPoint, addSpec + attr2)
 	replacePath := path.Join(mountPoint, replaceSpec + attr3)
 
 	write_to_file(exactPath, testContent1)
 	write_to_file(newPath, testContent2)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent2, t)
 	exec_cmd("mv " + addPath + " " + replacePath)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
-	fileContent = read_from_file(newPath)
+	fileContent = read_from_file(newPathDiffOrder)
 	assert_string_equals(fileContent, testContent1, t)
 
-	fileContent = read_from_file(exactPath)
+	fileContent = read_from_file(exactPathDiffOrder)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
 	lsContent := exec_cmd("ls -l " + newPath)
@@ -230,18 +220,17 @@ func TestRenameExistingQueryWithADeleteSpec(t *testing.T) {
 	deleteSpec := "-"
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
+	exactPathDiffOrder := path.Join(mountPoint, attr3 + "," + attr2 + "," + attr1)
 	newPath := path.Join(mountPoint, attr1 + "," + attr2)
 	addPath := path.Join(mountPoint, addSpec + attr2)
 	deletePath := path.Join(mountPoint, deleteSpec + attr3)
 
 	write_to_file(exactPath, testContent1)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	exec_cmd("mv " + addPath + " " + deletePath)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent1, t)
 
-	fileContent = read_from_file(exactPath)
+	fileContent = read_from_file(exactPathDiffOrder)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
 	lsContent := exec_cmd("ls -l " + newPath)
@@ -266,21 +255,21 @@ func TestRenameExistingQueryWithADeleteSpecWhenFileExists(t *testing.T) {
 	deleteSpec := "-"
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
+	exactPathDiffOrder := path.Join(mountPoint, attr2 + "," + attr1 + "," + attr3)
 	newPath := path.Join(mountPoint, attr1 + "," + attr2)
+	newPathDiffOrder := path.Join(mountPoint, attr2 + "," + attr1)
 	addPath := path.Join(mountPoint, addSpec + attr2)
 	deletePath := path.Join(mountPoint, deleteSpec + attr3)
 
 	write_to_file(exactPath, testContent1)
 	write_to_file(newPath, testContent2)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent2, t)
 	exec_cmd("mv " + addPath + " " + deletePath)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
-	fileContent = read_from_file(newPath)
+	fileContent = read_from_file(newPathDiffOrder)
 	assert_string_equals(fileContent, testContent1, t)
 
-	fileContent = read_from_file(exactPath)
+	fileContent = read_from_file(exactPathDiffOrder)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
 	lsContent := exec_cmd("ls -l " + newPath)
@@ -305,18 +294,17 @@ func TestRenameExistingQueryWithAnAddSpec(t *testing.T) {
 	querySpec := "?"
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
+	exactPathDiffOrder := path.Join(mountPoint, attr2 + "," + attr1)
 	newPath := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
 	addPath := path.Join(mountPoint, addSpec + attr2)
 	queryPath := path.Join(mountPoint, querySpec + attr3)
 
 	write_to_file(exactPath, testContent1)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	exec_cmd("mv " + addPath + " " + queryPath)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent1, t)
 
-	fileContent = read_from_file(exactPath)
+	fileContent = read_from_file(exactPathDiffOrder)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
 	lsContent := exec_cmd("ls -l " + newPath)
@@ -340,18 +328,17 @@ func TestRenameExistingQueryWithAnAddSpecWithSpecChanged(t *testing.T) {
 	querySpec := "+"
 
 	exactPath := path.Join(mountPoint, attr1 + "," + attr2)
+	exactPathDiffOrder := path.Join(mountPoint, attr2 + "," + attr1)
 	newPath := path.Join(mountPoint, attr1 + "," + attr2 + "," + attr3)
 	addPath := path.Join(mountPoint, addSpec + attr2)
 	queryPath := path.Join(mountPoint, querySpec + attr3)
 
 	write_to_file(exactPath, testContent1)
-	time.Sleep(time.Second * 1) // TODO fix this wait period!
 	exec_cmd("mv " + addPath + " " + queryPath)
-	time.Sleep(time.Second * 2) // TODO fix this wait period!
 	fileContent := read_from_file(newPath)
 	assert_string_equals(fileContent, testContent1, t)
 
-	fileContent = read_from_file(exactPath)
+	fileContent = read_from_file(exactPathDiffOrder)
 	assert_string_equals(fileContent, "", t) //File doesn't exist
 
 	lsContent := exec_cmd("ls -l " + newPath)
