@@ -43,13 +43,12 @@ func CreateFlatFS() string {
 	flatStoreDir := CreateFlatStoreDir(dir)
 	os.Args = append(os.Args, mountPointDir, flatStoreDir, "sqlite")
 	go FlatFS.Start() // dispatch in another thread
-	time.Sleep(time.Second * 3) // wait 3 secs to start
+	time.Sleep(time.Millisecond * 200) // wait 200 ms to start
 
 	return mountPointDir
 }
 
 func Terminate(mountPointDir string) {
-	time.Sleep(time.Second * 2) // wait 2 secs to finish
 	exec_cmd("fusermount -u " + mountPointDir)
 	os.Remove("file_metadata.db")
 }
