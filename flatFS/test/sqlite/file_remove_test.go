@@ -1,5 +1,3 @@
-// In memory attribute mapper
-
 package FlatFS
 
 import (

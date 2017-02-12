@@ -1,5 +1,3 @@
-// In memory attribute mapper
-
 package FlatFS
 
 import (
@@ -53,6 +51,7 @@ func CreateFlatFS() string {
 func Terminate(mountPointDir string) {
 	time.Sleep(time.Second * 2) // wait 2 secs to finish
 	exec_cmd("fusermount -u " + mountPointDir)
+	os.Remove("file_metadata.db")
 }
 
 func exec_cmd(cmd string) string {
