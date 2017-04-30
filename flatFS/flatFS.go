@@ -249,4 +249,19 @@ func (flatFs *FlatFs) CreateWithNewPath(name string, flags uint32, mode uint32, 
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err), newPath
 }
 
+func (flatFs *FlatFs) Symlink(pointedTo string, linkName string, context *fuse.Context) (code fuse.Status) {
+
+	newName :=  flatFs.GetPath(linkName)
+	log.Printf("In Symlink impl newname is %v old name is %v", newName, pointedTo)
+
+	return fuse.ToStatus(os.Symlink(pointedTo, newName))
+
+}
+
+func (flatFs *FlatFs) Readlink(name string, context *fuse.Context) (string, fuse.Status) {
+	log.Println("In Readlink impl")
+	return "?a:1", fuse.OK
+}
+
+
 
