@@ -20,7 +20,7 @@ func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 		currentScan := ScanDirectory(nextDirectory, t)
 		directoriesToAdd := FilterAsDirectoryPath(currentScan, nextDirectory)
 		nextDirectories = append(nextDirectories, directoriesToAdd...)
-		SaveFilesInDirectoryToFlatFs(rootDirectory, flatFsPath, nextDirectory, rootPath)
+		SaveFilesInDirectoryToFlatFs(currentScan, flatFsPath, nextDirectory, rootPath)
 	}
 }
 func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath, rootPath string) {
@@ -36,12 +36,15 @@ func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath
 
 	filesToBeSaved := FilterAsFileNames(dirContent)
 
+	//log.Println("files are going to be saved in: ", attrBuf.String())
+
 	for _, fileName := range filesToBeSaved {
 		var filePath bytes.Buffer
 		filePath.Write(attrBuf.Bytes())
 		filePath.WriteString(fmt.Sprintf("level_%v:%v", levelCount, fileName))
 		fileNameToSave := filePath.String()
 		os.Create(fileNameToSave)
+		//log.Println("Filename is " , fileNameToSave)
 	}
 }
 
