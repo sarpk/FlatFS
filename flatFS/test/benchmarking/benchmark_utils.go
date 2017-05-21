@@ -8,11 +8,17 @@ import (
 	"strings"
 	"bytes"
 	"fmt"
+	"math/rand"
 )
+
+var FlatFsFileNames = make([]string, 0)
+var HFSFileNames = make([]string, 0)
+
 
 func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 	rootDirectory := ScanDirectory(rootPath, t)
 	nextDirectories := FilterAsDirectoryPath(rootDirectory, rootPath)
+	rand.Seed(63)
 	SaveFilesInDirectoryToFlatFs(rootDirectory, flatFsPath, rootPath, rootPath)
 	for len(nextDirectories) != 0 {
 		nextDirectory := nextDirectories[0]
@@ -22,7 +28,18 @@ func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 		nextDirectories = append(nextDirectories, directoriesToAdd...)
 		SaveFilesInDirectoryToFlatFs(currentScan, flatFsPath, nextDirectory, rootPath)
 	}
+	ShuffleArrays()
+	//log.Println("size is ", len(FlatFsFileNames))
 }
+
+func ShuffleArrays() {
+	for i := range FlatFsFileNames {
+		j := rand.Intn(i + 1)
+		FlatFsFileNames[i], FlatFsFileNames[j] = FlatFsFileNames[j], FlatFsFileNames[i]
+		HFSFileNames[i], HFSFileNames[j] = HFSFileNames[j], HFSFileNames[i]
+	}
+}
+
 func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath, rootPath string) {
 	attributesToAdd := currPath[len(rootPath):]
 	attributes := strings.Split(attributesToAdd, "/")[1:]
@@ -43,8 +60,11 @@ func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath
 		filePath.Write(attrBuf.Bytes())
 		filePath.WriteString(fmt.Sprintf("level_%v:%v", levelCount, fileName))
 		fileNameToSave := filePath.String()
-		os.Create(fileNameToSave)
-		//log.Println("Filename is " , fileNameToSave)
+		//os.Create(fileNameToSave)
+		if rand.Intn(10) == 5 { //10% chance to match
+			FlatFsFileNames = append(FlatFsFileNames, fileNameToSave)
+			HFSFileNames = append(HFSFileNames, attributesToAdd+ "/" +fileNameToSave)
+		}
 	}
 }
 
