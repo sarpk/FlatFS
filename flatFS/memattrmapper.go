@@ -3,7 +3,6 @@
 package FlatFS
 
 import (
-	"log"
 	"strings"
 )
 
@@ -201,7 +200,7 @@ func (attrMapper *MemAttrMapper) Close() {
 }
 
 func (attrMapper *MemAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
-	log.Println("Mocking middleware")
+	//log.Println("Mocking middleware")
 	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, createFileSpecQueryType())
 	if attributeAdded {
 		return uuidStr

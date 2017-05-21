@@ -23,6 +23,7 @@ func Prepare() {
 	AttrMapperManagerInjector = *NewAttrMapperManager()
 	AttrMapperManagerInjector.Set("default", NewMemAttrMapper())
 	AttrMapperManagerInjector.Set("sqlite", NewSQLiteAttrMapper())
+	AttrMapperManagerInjector.Set("MySQL", NewMySQLAttrMapper())
 }
 
 func Start() {
@@ -30,7 +31,7 @@ func Start() {
 	flag.Parse()
 	if len(flag.Args()) < 3 {
 		log.Print("Given flags are: ", flag.Args())
-		log.Fatal("Usage:\n  FlatFS MOUNTPOINT FLATSTORAGE [backend] \n  [backend] can be 'default' (in memory) or 'sqlite' ")
+		log.Fatal("Usage:\n  FlatFS MOUNTPOINT FLATSTORAGE [backend] \n  [backend] can be 'default' (in memory), 'sqlite' or 'MySQL' ")
 	}
 	attrMapperFromManager := AttrMapperManagerInjector.Get(flag.Arg(2))
 	defer attrMapperFromManager.Close()
@@ -42,7 +43,7 @@ func Start() {
 	nfs := pathfs.NewPathNodeFs(flatFs, nil)
 	nfs.SetDebug(true)
 	server, _, err := nodefs.MountRoot(flag.Arg(0), nfs.Root(), nil)
-	server.SetDebug(true)
+	//server.SetDebug(true)
 	if err != nil {
 		log.Fatalf("Mount fail: %v\n", err)
 	}

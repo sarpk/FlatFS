@@ -18,7 +18,7 @@ type FlatFs struct {
 }
 
 func (flatFs *FlatFs) GetAttrWithPath(path, fileName string, context *fuse.Context) (*fuse.Attr, fuse.Status, string) {
-	log.Printf("GetAttrWithPath for path is %s and name is %s", path, fileName)
+	//log.Printf("GetAttrWithPath for path is %s and name is %s", path, fileName)
 	pathQuery, pathQueryType := ParseQuery(path)
 	fileNameQuery, fileNameQueryType := ParseQuery(fileName)
 	if (QueryOrAdd(pathQueryType) || QueryOrAdd(fileNameQueryType)) {
@@ -45,7 +45,7 @@ func (flatFs *FlatFs) GetAttrWithPath(path, fileName string, context *fuse.Conte
 }
 
 func (flatFs *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr, code fuse.Status) {
-	log.Printf("GetAttr for name is %s", name)
+	//log.Printf("GetAttr for name is %s", name)
 	//fullPath :=
 	parsedQueryPath, queryType := ParseQuery(name)
 	fullPath, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQueryPath, queryType)
@@ -53,7 +53,7 @@ func (flatFs *FlatFs) GetAttr(name string, context *fuse.Context) (a *fuse.Attr,
 		fullPath = name
 	}
 	fullPath = flatFs.GetPath(fullPath)
-	log.Printf("Found path is  %s", fullPath)
+	//log.Printf("Found path is  %s", fullPath)
 	return flatFs.AttrStatHandle(name, fullPath, queryType)
 
 }
@@ -218,7 +218,7 @@ func (flatFs *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 }
 
 func (flatFs *FlatFs) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
-	log.Printf("open namea is %s", name)
+	//log.Printf("open namea is %s", name)
 	_, parseError := uuid.ParseHex(name)
 	if parseError == nil {
 		//It's a valid UUID so just parse that
@@ -241,11 +241,15 @@ func (flatFs *FlatFs) Mkdir(path string, mode uint32, context *fuse.Context) (co
 }
 
 func (flatFs *FlatFs) CreateWithNewPath(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status, newPath string) {
-	log.Printf("create file name is %s", name)
+	//log.Printf("create file name is %s", name)
+	//start := time.Now()
 	parsedQuery, _ := ParseQuery(name)
+	//log.Println("ParseQuery took ", time.Since(start))
 	newPath = flatFs.attrMapper.CreateFromQuery(parsedQuery)
-	log.Printf("Saving the file name as %s", newPath)
+	//log.Println("CreateFromQuery took ", time.Since(start))
+	//log.Printf("Saving the file name as %s", newPath)
 	f, err := os.OpenFile(flatFs.GetPath(newPath), int(flags) | os.O_CREATE, os.FileMode(mode))
+	//log.Println("OpenFile took ", time.Since(start))
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err), newPath
 }
 

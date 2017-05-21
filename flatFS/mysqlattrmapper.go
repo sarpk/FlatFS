@@ -1,4 +1,4 @@
-// SQLite attribute mapper
+// MySQL attribute mapper
 
 package FlatFS
 
@@ -6,38 +6,37 @@ import (
 	"log"
 	"database/sql"
 	"fmt"
-	"bytes"
 	"strings"
 	"time"
 )
 
-type SQLiteAttrMapper struct {
+type MySQLAttrMapper struct {
 	AttrMapper
 	db *sql.DB
 }
 
-type FileMetadataEntry struct {
-	fileID    string
-	attribute string
-	value     string
-}
+//type FileMetadataEntry struct {
+//	fileID    string
+//	attribute string
+//	value     string
+//}
 
-func NewSQLiteAttrMapper() *SQLiteAttrMapper {
+func NewMySQLAttrMapper() *MySQLAttrMapper {
 
-	const dbpath = "file_metadata.db"
+	const dataSource = "root:changeit@/flatfs"
 
-	sqliteAttrMapper := &SQLiteAttrMapper{
-		db: InitSqliteDB(dbpath),
+	mySqlAttrMapper := &MySQLAttrMapper{
+		db: InitMySQLeDB(dataSource),
 	}
-	sqliteAttrMapper.CreateTable()
-	return sqliteAttrMapper
+	mySqlAttrMapper.CreateTable()
+	return mySqlAttrMapper
 }
 
-func (attrMapper *SQLiteAttrMapper) Close() {
+func (attrMapper *MySQLAttrMapper) Close() {
 	attrMapper.db.Close()
 }
 
-func (attrMapper *SQLiteAttrMapper) CreateTable() {
+func (attrMapper *MySQLAttrMapper) CreateTable() {
 	// create table if not exists
 	sql_table := `
 	CREATE TABLE IF NOT EXISTS FileMetadata(
@@ -54,7 +53,7 @@ func (attrMapper *SQLiteAttrMapper) CreateTable() {
 	}
 }
 
-func (attrMapper *SQLiteAttrMapper) ReadEntries(query string) []FileMetadataEntry {
+func (attrMapper *MySQLAttrMapper) ReadEntries(query string) []FileMetadataEntry {
 	rows, err := attrMapper.db.Query(query)
 	if err != nil {
 		panic(err)
@@ -73,7 +72,7 @@ func (attrMapper *SQLiteAttrMapper) ReadEntries(query string) []FileMetadataEntr
 	return result
 }
 
-func (attrMapper *SQLiteAttrMapper) ReadEntries2(query string) []FileMetadataEntry {
+func (attrMapper *MySQLAttrMapper) ReadEntries2(query string) []FileMetadataEntry {
 	start := time.Now()
 	rows, err := attrMapper.db.Query(query)
 	log.Println("Query is ", query)
@@ -100,9 +99,9 @@ func (attrMapper *SQLiteAttrMapper) ReadEntries2(query string) []FileMetadataEnt
 	return result
 }
 
-func (attrMapper *SQLiteAttrMapper) StoreEntry(entries []FileMetadataEntry) {
+func (attrMapper *MySQLAttrMapper) StoreEntry(entries []FileMetadataEntry) {
 	sql_addEntry := `
-	INSERT INTO FileMetadata(
+	INSERT OR REPLACE INTO FileMetadata(
 		fileID,
 		attribute,
 		value
@@ -123,14 +122,14 @@ func (attrMapper *SQLiteAttrMapper) StoreEntry(entries []FileMetadataEntry) {
 	}
 }
 
-func (attrMapper *SQLiteAttrMapper) ReadEntry() []FileMetadataEntry {
+func (attrMapper *MySQLAttrMapper) ReadEntry() []FileMetadataEntry {
 	sql_readAll := `
 	SELECT fileID, attribute, value FROM FileMetadata
 	`
 	return attrMapper.ReadEntries(sql_readAll)
 }
 
-func (attrMapper *SQLiteAttrMapper) QueryBuilderForMultipleUUIDSelections(attributes *QueryKeyValue) (string, bool) {
+func (attrMapper *MySQLAttrMapper) QueryBuilderForMultipleUUIDSelections(attributes *QueryKeyValue) (string, bool) {
 	_, mainQuery, foundQuery := QueryBuilderForUUIDSelection(attributes)
 	if !foundQuery {
 		return "", false
@@ -140,7 +139,7 @@ func (attrMapper *SQLiteAttrMapper) QueryBuilderForMultipleUUIDSelections(attrib
 	return fmt.Sprintf("SELECT fileID, attribute, value FROM FileMetadata WHERE fileID IN ( %v )", mainQuery), true
 }
 
-func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
+func (attrMapper *MySQLAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
 	builtQuery, querySuccess := attrMapper.QueryBuilderForMultipleUUIDSelections(attributes)
 	if querySuccess {
 		//log.Println("Built this query for all matching uuids ", builtQuery)
@@ -171,38 +170,38 @@ func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyV
 }
 
 
-func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bool) {
-	if attributes == nil || attributes.keyValue == nil || len(attributes.keyValue) == 0 {
-		return "", "", false
-	}
-	var queryBuf bytes.Buffer
-	//var attrBuf bytes.Buffer
-	for key, value := range attributes.keyValue {
-		if queryBuf.Len() != 0 {
-			queryBuf.WriteString("INTERSECT ")
-			//attrBuf.WriteString(" AND ")
-		}
-		queryBuf.WriteString(fmt.Sprintf("SELECT fileID FROM FileMetadata WHERE attribute='%v' AND value='%v' ", key, value))
-		//attrBuf.WriteString(fmt.Sprintf("attribute!='%v'", key))
-		//someStr := queryBuf.String()
-		//log.Println(someStr)
-	}
-	secondary := queryBuf.String()
-	//if attrBuf.Len() != 0 {
-	//	queryBuf.WriteString("EXCEPT SELECT fileID FROM FileMetadata WHERE ")
-	//	queryBuf.Write(attrBuf.Bytes())
-	//}
-	return queryBuf.String(), secondary, true
-}
+//func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bool) {
+//	if attributes == nil || attributes.keyValue == nil || len(attributes.keyValue) == 0 {
+//		return "", "", false
+//	}
+//	var queryBuf bytes.Buffer
+//	//var attrBuf bytes.Buffer
+//	for key, value := range attributes.keyValue {
+//		if queryBuf.Len() != 0 {
+//			queryBuf.WriteString("INTERSECT ")
+//			//attrBuf.WriteString(" AND ")
+//		}
+//		queryBuf.WriteString(fmt.Sprintf("SELECT fileID FROM FileMetadata WHERE attribute='%v' AND value='%v' ", key, value))
+//		//attrBuf.WriteString(fmt.Sprintf("attribute!='%v'", key))
+//		//someStr := queryBuf.String()
+//		//log.Println(someStr)
+//	}
+//	secondary := queryBuf.String()
+//	//if attrBuf.Len() != 0 {
+//	//	queryBuf.WriteString("EXCEPT SELECT fileID FROM FileMetadata WHERE ")
+//	//	queryBuf.Write(attrBuf.Bytes())
+//	//}
+//	return queryBuf.String(), secondary, true
+//}
 
-func (attrMapper *SQLiteAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
+func (attrMapper *MySQLAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
 	for key, value := range attributes.keyValue {
 		deleteQuery := fmt.Sprintf("Delete FROM FileMetadata WHERE fileID='%v' AND attribute='%v' AND value='%v'", uuid, key, value)
 		attrMapper.ReadEntries2(deleteQuery)
 	}
 }
 
-func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
+func (attrMapper *MySQLAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
 	//log.Println("Reading all entries")
 	//log.Println(attrMapper.ReadEntry())
 	//start := time.Now()
@@ -237,7 +236,7 @@ func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, quer
 	return "", false
 }
 
-func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
+func (attrMapper *MySQLAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	file := FileMetadataEntry{
 		fileID: uuid,
 		attribute: key,
@@ -246,7 +245,7 @@ func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	attrMapper.StoreEntry([]FileMetadataEntry{file})
 }
 
-func (attrMapper *SQLiteAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
+func (attrMapper *MySQLAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
 	//log.Println("Not implemented")
 	//start := time.Now()
 	fileSpecQueryType := createFileSpecQueryType()
