@@ -9,11 +9,12 @@ import (
 	"bytes"
 	"fmt"
 	"math/rand"
+	"encoding/gob"
+	"io/ioutil"
 )
 
 var FlatFsFileNames = make([]string, 0)
 var HFSFileNames = make([]string, 0)
-
 
 func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 	rootDirectory := ScanDirectory(rootPath, t)
@@ -29,7 +30,33 @@ func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 		SaveFilesInDirectoryToFlatFs(currentScan, flatFsPath, nextDirectory, rootPath)
 	}
 	ShuffleArrays()
+	WriteArrays()
 	//log.Println("size is ", len(FlatFsFileNames))
+}
+
+func ReadArrays(fileName string) []string {
+	b, _ := ioutil.ReadFile(fileName)
+	fileList := []string{}
+	gob.NewDecoder(bytes.NewBuffer(b)).Decode(&fileList)
+	return fileList
+}
+
+
+func WriteArrays() {
+	buf1 := &bytes.Buffer{}
+	gob.NewEncoder(buf1).Encode(FlatFsFileNames)
+
+	err := ioutil.WriteFile("FlatFsFileNames.txt", buf1.Bytes(), 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	buf2 := &bytes.Buffer{}
+	gob.NewEncoder(buf2).Encode(HFSFileNames)
+	err = ioutil.WriteFile("HFSFileNames.txt", buf2.Bytes(), 0644)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func ShuffleArrays() {
@@ -61,9 +88,10 @@ func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath
 		filePath.WriteString(fmt.Sprintf("level_%v:%v", levelCount, fileName))
 		fileNameToSave := filePath.String()
 		//os.Create(fileNameToSave)
-		if rand.Intn(10) == 5 { //10% chance to match
+		if rand.Intn(10) == 5 {
+			//10% chance to match
 			FlatFsFileNames = append(FlatFsFileNames, fileNameToSave)
-			HFSFileNames = append(HFSFileNames, attributesToAdd+ "/" +fileNameToSave)
+			HFSFileNames = append(HFSFileNames, "/tmp/lpbckmtpt/" + attributesToAdd + "/" + fileName)
 		}
 	}
 }
