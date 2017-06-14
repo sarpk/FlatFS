@@ -35,6 +35,38 @@ func TestFileCreateBenchmarkForHFS(t *testing.T) {
 	FileCreateBenchmark("HFSFileNames.txt")
 }
 
+func TestFileToFileMoveOverwriteBenchmarkForHFS(t *testing.T) {
+	FileBenchmarkTwoProcess("HFSFileNames.txt", RenameFileWrapper)
+}
+
+func TestFileToFileMoveOverwriteBenchmarkForFlatFS(t *testing.T) {
+	FileBenchmarkTwoProcess("FlatFsFileNames.txt", RenameFileWrapper)
+}
+
+type processFileRename func(string, string)
+
+
+func FileBenchmarkTwoProcess(fileListPath string, fun processFileRename) {
+	fileList := ReadArrays(fileListPath)
+	fileListSize := len(fileList);
+	j := fileListSize-1;
+	for i := 0; i < fileListSize; i++ {
+		if i==j {
+			break;
+		}
+		fun(fileList[i], fileList[j])
+		j--
+	}
+}
+
+func RenameFileWrapper(oldPath, newPath string) {
+	err := os.Rename(oldPath, newPath)
+	if err != nil {
+		log.Println("Rename file wrapper err ", err)
+	}
+}
+
+
 type processFile func(string)
 
 func FileCreateBenchmark(fileName string) {
@@ -49,17 +81,18 @@ func FileLookupBenchmark(fileName string) {
 	FileBenchmark(fileName, ReadFileWrapper)
 }
 
-func FileBenchmark(fileName string, fun processFile) {
-	fileList := ReadArrays(fileName)
+func FileBenchmark(fileListPath string, fun processFile) {
+	fileList := ReadArrays(fileListPath)
 	for _, fileName := range fileList {
 		fun(fileName)
 	}
 }
 
+
 func CreateFileWrapper(fileName string) {
 	file, err := os.Create(fileName)
 	if err != nil {
-		log.Println(err)
+		log.Println("Create file wrapper err ", err)
 	}
 	defer file.Close()
 }
@@ -67,13 +100,13 @@ func CreateFileWrapper(fileName string) {
 func DeleteFileWrapper(fileName string) {
 	err := os.Remove(fileName)
 	if err != nil {
-		log.Println(err)
+		log.Println("Delete file wrapper err ", err)
 	}
 }
 
 func ReadFileWrapper(fileName string) {
 	_, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		log.Println(err)
+		log.Println("Read file wrapper err ", err)
 	}
 }
