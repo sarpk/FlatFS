@@ -7,10 +7,6 @@ import (
 	"os"
 )
 
-func TestUtilsFunctions(t *testing.T) {
-	RecurseThroughFolders("/tmp/lpbckmtpt/", "/tmp/mountpoint/", t)
-}
-
 func TestFileLookUpBenchmarkForFlatFS(t *testing.T) {
 	FileLookupBenchmark("FlatFsFileNames.txt")
 }
@@ -35,38 +31,6 @@ func TestFileCreateBenchmarkForHFS(t *testing.T) {
 	FileCreateBenchmark("HFSFileNames.txt")
 }
 
-func TestFileToFileMoveOverwriteBenchmarkForHFS(t *testing.T) {
-	FileBenchmarkTwoProcess("HFSFileNames.txt", RenameFileWrapper)
-}
-
-func TestFileToFileMoveOverwriteBenchmarkForFlatFS(t *testing.T) {
-	FileBenchmarkTwoProcess("FlatFsFileNames.txt", RenameFileWrapper)
-}
-
-type processFileRename func(string, string)
-
-
-func FileBenchmarkTwoProcess(fileListPath string, fun processFileRename) {
-	fileList := ReadArrays(fileListPath)
-	fileListSize := len(fileList);
-	j := fileListSize-1;
-	for i := 0; i < fileListSize; i++ {
-		if i==j {
-			break;
-		}
-		fun(fileList[i], fileList[j])
-		j--
-	}
-}
-
-func RenameFileWrapper(oldPath, newPath string) {
-	err := os.Rename(oldPath, newPath)
-	if err != nil {
-		log.Println("Rename file wrapper err ", err)
-	}
-}
-
-
 type processFile func(string)
 
 func FileCreateBenchmark(fileName string) {
@@ -87,7 +51,6 @@ func FileBenchmark(fileListPath string, fun processFile) {
 		fun(fileName)
 	}
 }
-
 
 func CreateFileWrapper(fileName string) {
 	file, err := os.Create(fileName)
