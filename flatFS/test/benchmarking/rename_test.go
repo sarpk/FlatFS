@@ -67,6 +67,26 @@ func TestDirToDirectoryMoveForFlatFs(t *testing.T) {
 	FileBenchmarkTwoProcess("FlatFsFileNames.txt", RenameFileWrapperAppendWithQueryRandom)
 }
 
+func TestDirToParentDirMoveForHFS(t *testing.T) {
+	TestFileCreateBenchmarkForHFS(t)
+	defer TestFileDeleteBenchmarkForHFS(t)
+	FileBenchmarkTwoProcess("HFSFileNames.txt", RenameFileWrapperToParent)
+}
+
+func TestDirToParentDirMoveForFlatFs(t *testing.T) {
+	TestFileCreateBenchmarkForFlatFS(t)
+	defer TestFileDeleteBenchmarkForFlatFS(t)
+	FileBenchmarkTwoProcess("FlatFsFileNames.txt", RenameFileWrapperRemoveLastAttribute)
+}
+
+func RenameFileWrapperRemoveLastAttribute(oldPath, newPath string) {
+	RenameFileWrapper(oldPath, DeleteQuery(GetLastAttributeValue(oldPath)))
+}
+
+func RenameFileWrapperToParent(oldPath, newPath string) {
+	RenameFileWrapper(oldPath, GetParentFolder(oldPath))
+}
+
 func RenameFileWrapperAppendWithQueryRandom(oldPath, newPath string) {
 	RenameFileWrapper(oldPath, AppendQueryParam(newPath) + ",random:" + RAND_STR)
 }
@@ -79,6 +99,13 @@ func RenameFileWrapperRemoveLastPath(oldPath, newPath string) {
 	RenameFileWrapper(oldPath, GetParentFolder(newPath))
 }
 
+func GetLastAttributeValue(path string) (string, string) {
+	pairs := strings.Split(path, ",")
+	lastPair := pairs[len(pairs) - 1]
+	pair := strings.Split(lastPair, ":")
+	return pair[0], pair[1]
+}
+
 func GetParentFolder(path string) string {
 	amountOfDirs := strings.Split(path, "/")
 	lastFileLen := len(amountOfDirs[len(amountOfDirs) - 1])
@@ -87,6 +114,10 @@ func GetParentFolder(path string) string {
 
 func RenameFileWrapperAppendWithQuery(oldPath, newPath string) {
 	RenameFileWrapper(oldPath, AppendQueryParam(newPath))
+}
+
+func DeleteQuery(attribute, value string) string {
+	return MOUNT_POINT_PATH + "-" + attribute + ":" + value
 }
 
 func AppendQueryParam(path string) string {
