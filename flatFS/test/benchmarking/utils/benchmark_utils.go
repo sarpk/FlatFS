@@ -20,6 +20,29 @@ var HFSFileNames = make([]string, 0)
 
 var MOUNT_POINT_PATH = FlatFS.GetCurrentDir()
 
+type processFileRename func(string, string)
+
+func RenameFileWrapper(oldPath, newPath string) {
+	err := os.Rename(oldPath, newPath)
+	if err != nil {
+		log.Println("Rename file wrapper err ", err)
+	}
+}
+
+func FileBenchmarkTwoProcess(fileListPath string, fun processFileRename) {
+	fileList := ReadArrays(fileListPath)
+	fileListSize := len(fileList);
+	j := fileListSize - 1;
+	for i := 0; i < fileListSize; i++ {
+		if i == j {
+			break;
+		}
+		fun(fileList[i], fileList[j])
+		j--
+	}
+}
+
+
 type processFile func(string)
 
 func FileBenchmark(fileListPath string, fun processFile) {
