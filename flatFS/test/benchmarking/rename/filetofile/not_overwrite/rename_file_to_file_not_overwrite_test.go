@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-var RAND_STR = "MN12tA_j"
 
 func TestSetupNotOverwrite(t *testing.T) {
 	UtilsFlatFs.RecurseThroughFolders("/tmp/lpbckmtpt/", UtilsFlatFs.MOUNT_POINT_PATH, t)
@@ -26,6 +25,6 @@ func TestFileToFileMoveNotOverwriteBenchmarkForFlatFs(t *testing.T) {
 }
 
 func RenameFileWrapperAppendWithRandomStr(oldPath, newPath string) {
-	newPath += RAND_STR
+	newPath += UtilsFlatFs.RAND_STR
 	UtilsFlatFs.RenameFileWrapper(oldPath, newPath)
 }

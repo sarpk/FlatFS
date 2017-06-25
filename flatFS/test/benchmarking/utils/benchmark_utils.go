@@ -19,13 +19,14 @@ var FlatFsFileNames = make([]string, 0)
 var HFSFileNames = make([]string, 0)
 
 var MOUNT_POINT_PATH = FlatFS.GetCurrentDir()
+var RAND_STR = "MN12tA_j"
 
 type processFileRename func(string, string)
 
 func RenameFileWrapper(oldPath, newPath string) {
 	err := os.Rename(oldPath, newPath)
 	if err != nil {
-		log.Println("Rename file wrapper err ", err)
+		log.Fatalln("Rename file wrapper err ", err)
 	}
 }
 
