@@ -1,4 +1,4 @@
-package BenchmarkFlatFS
+package UtilsFlatFs
 
 import (
 	"testing"
@@ -11,10 +11,15 @@ import (
 	"math/rand"
 	"encoding/gob"
 	"io/ioutil"
+	"github.com/sarpk/FlatFS/flatFS/test/in-memory"
+	"log"
 )
 
 var FlatFsFileNames = make([]string, 0)
 var HFSFileNames = make([]string, 0)
+
+var MOUNT_POINT_PATH = FlatFS.GetCurrentDir()
+
 
 func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 	rootDirectory := ScanDirectory(rootPath, t)
@@ -31,7 +36,7 @@ func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 	}
 	ShuffleArrays()
 	WriteArrays()
-	//log.Println("size is ", len(FlatFsFileNames))
+	log.Println("size is ", len(FlatFsFileNames))
 }
 
 func ReadArrays(fileName string) []string {
@@ -87,9 +92,9 @@ func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath
 		filePath.Write(attrBuf.Bytes())
 		filePath.WriteString(fmt.Sprintf("level_%v:%v", levelCount, fileName))
 		fileNameToSave := filePath.String()
-		//os.Create(fileNameToSave)
 		if rand.Intn(10) == 5 {
 			//10% chance to match
+			os.Create(fileNameToSave)
 			FlatFsFileNames = append(FlatFsFileNames, fileNameToSave)
 			HFSFileNames = append(HFSFileNames, "/tmp/lpbckmtpt/" + attributesToAdd + "/" + fileName)
 		}
@@ -128,7 +133,6 @@ func ScanDirectory(dir string, t *testing.T) []os.FileInfo {
 	if err2 != nil && err2 != io.EOF {
 		t.Fatalf("Reading dir %q failed: %v", file, err2)
 	}
-
 	return files
 }
 
