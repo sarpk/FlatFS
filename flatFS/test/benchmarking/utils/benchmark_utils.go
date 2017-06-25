@@ -20,6 +20,14 @@ var HFSFileNames = make([]string, 0)
 
 var MOUNT_POINT_PATH = FlatFS.GetCurrentDir()
 
+type processFile func(string)
+
+func FileBenchmark(fileListPath string, fun processFile) {
+	fileList := ReadArrays(fileListPath)
+	for _, fileName := range fileList {
+		fun(fileName)
+	}
+}
 
 func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 	rootDirectory := ScanDirectory(rootPath, t)

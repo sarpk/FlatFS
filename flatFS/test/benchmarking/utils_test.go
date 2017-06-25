@@ -7,13 +7,6 @@ import (
 	"os"
 )
 
-func TestFileLookUpBenchmarkForFlatFS(t *testing.T) {
-	FileLookupBenchmark("FlatFsFileNames.txt")
-}
-
-func TestFileLookUpBenchmarkForHFS(t *testing.T) {
-	FileLookupBenchmark("HFSFileNames.txt")
-}
 
 func TestFileDeleteBenchmarkForFlatFS(t *testing.T) {
 	FileDeleteBenchmark("FlatFsFileNames.txt")

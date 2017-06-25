@@ -24,17 +24,8 @@ func TestFileLookUpBenchmarkForHFS(t *testing.T) {
 	log.Printf("TestFileLookUpBenchmarkForHFS took %s", time.Since(start))
 }
 
-type processFile func(string)
-
 func FileLookupBenchmark(fileName string) {
-	FileBenchmark(fileName, ReadFileWrapper)
-}
-
-func FileBenchmark(fileListPath string, fun processFile) {
-	fileList := UtilsFlatFs.ReadArrays(fileListPath)
-	for _, fileName := range fileList {
-		fun(fileName)
-	}
+	UtilsFlatFs.FileBenchmark(fileName, ReadFileWrapper)
 }
 
 func ReadFileWrapper(fileName string) {
