@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"github.com/sarpk/FlatFS/flatFS/test/in-memory"
 	"log"
+	"syscall"
 )
 
 var FlatFsFileNames = make([]string, 0)
@@ -23,10 +24,35 @@ var RAND_STR = "MN12tA_j"
 
 type processFileRename func(string, string)
 
+func RenameFileWrapperAppendWithQueryRandom(oldPath, newPath string) {
+	RenameFileWrapper(oldPath, AppendQueryParam(newPath) + ",random:" + RAND_STR)
+}
+
+func RenameFileWrapperAddRandomPath(oldPath, newPath string) {
+	RenameFileWrapper(oldPath, GetParentFolder(newPath) + RAND_STR + "/")
+}
+
+func GetParentFolder(path string) string {
+	amountOfDirs := strings.Split(path, "/")
+	lastFileLen := len(amountOfDirs[len(amountOfDirs) - 1])
+	return path[0:len(path) - lastFileLen]
+}
+
+func AppendQueryParam(path string) string {
+	return MOUNT_POINT_PATH + "?" + strings.Split(path, MOUNT_POINT_PATH)[1]
+}
+
 func RenameFileWrapper(oldPath, newPath string) {
-	err := os.Rename(oldPath, newPath)
+	log.Printf("old path is %s and new path is %s", oldPath, newPath)
+	oldPathStat, _ := os.Stat(oldPath)
+	newPathStat, _ := os.Stat(newPath)
+	if (newPathStat != nil && oldPathStat != nil) {
+		log.Printf("old path is %v and new path is %v", oldPathStat.IsDir(), newPathStat.IsDir())
+	}
+
+	err := syscall.Rename(oldPath, newPath)
 	if err != nil {
-		log.Fatalln("Rename file wrapper err ", err)
+		log.Println("Rename file wrapper err ", err)
 	}
 }
 
