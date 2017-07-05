@@ -8,7 +8,7 @@ import (
 )
 
 func TestSetupOverwrite(t *testing.T) {
-	UtilsFlatFs.RecurseThroughFolders("/tmp/lpbckmtpt/", UtilsFlatFs.MOUNT_POINT_PATH, t)
+	UtilsFlatFs.RecurseThroughFolders(UtilsFlatFs.MOUNT_POINT_PATH, t)
 }
 
 func TestFileToFileMoveOverwriteBenchmarkForHFS(t *testing.T) {
@@ -21,6 +21,10 @@ func TestFileToFileMoveOverwriteBenchmarkForFlatFS(t *testing.T) {
 	start := time.Now()
 	UtilsFlatFs.FileBenchmarkTwoProcess("FlatFsFileNames.txt", UtilsFlatFs.RenameFileWrapper)
 	log.Printf("TestFileToFileMoveOverwriteBenchmarkForFlatFS took %s", time.Since(start))
+}
+
+func TestTerminate(t *testing.T) {
+	UtilsFlatFs.Terminate()
 }
 
 
