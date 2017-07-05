@@ -19,7 +19,7 @@ import (
 var FlatFsFileNames = make([]string, 0)
 var HFSFileNames = make([]string, 0)
 
-var MOUNT_POINT_PATH = FlatFS.GetCurrentDir()
+var MOUNT_POINT_PATH = FlatFS.GetCurrentDir() + "/mountpoint/"
 var RAND_STR = "MN12tA_j"
 
 type processFileRename func(string, string)
@@ -80,6 +80,7 @@ func FileBenchmark(fileListPath string, fun processFile) {
 }
 
 func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
+	FlatFS.CreateFlatFS()
 	rootDirectory := ScanDirectory(rootPath, t)
 	nextDirectories := FilterAsDirectoryPath(rootDirectory, rootPath)
 	rand.Seed(63)

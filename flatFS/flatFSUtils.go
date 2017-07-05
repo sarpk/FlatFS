@@ -25,7 +25,7 @@ func Prepare() {
 	AttrMapperManagerInjector.Set("sqlite", NewSQLiteAttrMapper())
 }
 
-func Start() {
+func StartWithDebug(nfsDebug, serverDebug bool) {
 	Prepare()
 	flag.Parse()
 	if len(flag.Args()) < 3 {
@@ -40,13 +40,17 @@ func Start() {
 		flatStorage: flag.Arg(1),
 	}
 	nfs := pathfs.NewPathNodeFs(flatFs, nil)
-	nfs.SetDebug(true)
+	nfs.SetDebug(nfsDebug)
 	server, _, err := nodefs.MountRoot(flag.Arg(0), nfs.Root(), nil)
-	server.SetDebug(true)
+	server.SetDebug(serverDebug)
 	if err != nil {
 		log.Fatalf("Mount fail: %v\n", err)
 	}
 	server.Serve()
+}
+
+func Start() {
+	StartWithDebug(true, true)
 }
 
 func NewQueryKeyValue() *QueryKeyValue {

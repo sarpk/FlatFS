@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 	"os"
+	"github.com/sarpk/FlatFS/flatFS/test/in-memory"
 )
 
 func TestSetup(t *testing.T) {
@@ -13,7 +14,9 @@ func TestSetup(t *testing.T) {
 }
 
 func TestDirToDirectoryMoveForHFS(t *testing.T) {
+	start := time.Now()
 	UtilsFlatFs.FileBenchmarkTwoProcess("HFSFileNames.txt", RenameFileWrapperAddRandomPath)
+	log.Printf("TestDirToDirectoryMoveForHFS took %s", time.Since(start))
 }
 
 func TestDirToDirectoryMoveForFlatFs(t *testing.T) {
@@ -22,8 +25,12 @@ func TestDirToDirectoryMoveForFlatFs(t *testing.T) {
 	log.Printf("TestDirToDirectoryMoveForFlatFs took %s", time.Since(start))
 }
 
+func TestTerminate(t *testing.T) {
+	FlatFS.Terminate(UtilsFlatFs.MOUNT_POINT_PATH)
+}
+
 func RenameFileWrapperAppendWithQueryRandom(oldPath, newPath string) {
-	UtilsFlatFs.RenameFileWrapper(oldPath, UtilsFlatFs.AppendQueryParam(newPath) + ",random:" + UtilsFlatFs.RAND_STR)
+	UtilsFlatFs.RenameFileWrapper(UtilsFlatFs.AppendQueryParam(oldPath), UtilsFlatFs.AppendQueryParam(newPath) + ",random:" + UtilsFlatFs.RAND_STR)
 }
 
 func RenameFileWrapperAddRandomPath(oldPath, newPath string) {

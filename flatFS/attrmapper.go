@@ -26,19 +26,19 @@ func RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
 	AddUUIDToAttributes(newSpec, fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
 
-func  AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
+func AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
 	uuidMatchingToFile, found := fs.attrMapper.GetAddedUUID(oldSpec, createFileSpecQueryType())
 	if !found {
 		return
 	}
 	fs.attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
 
-	AddUUIDToAttributes(AppendQueryKeyValue(oldSpec,newSpec), fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
+	AddUUIDToAttributes(AppendQueryKeyValue(oldSpec, newSpec), fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
 
 func AddUUIDToAttributes(attributes *QueryKeyValue, addQueryToUUID func(string, string, string), uuid string) {
 	for key, value := range attributes.keyValue {
-		log.Println("Adding:", key, " and value ", value, " to ", uuid)
+		//log.Println("Adding:", key, " and value ", value, " to ", uuid)
 		addQueryToUUID(key, value, uuid)
 	}
 }

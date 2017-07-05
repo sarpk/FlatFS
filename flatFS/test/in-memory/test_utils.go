@@ -42,7 +42,7 @@ func CreateFlatFS() string {
 	mountPointDir := CreateMountPoint(dir)
 	flatStoreDir := CreateFlatStoreDir(dir)
 	os.Args = append(os.Args, mountPointDir, flatStoreDir, "default")
-	go FlatFS.Start() // dispatch in another thread
+	go FlatFS.StartWithDebug(false, false) // dispatch in another thread
 	time.Sleep(time.Millisecond * 200) // wait 200 ms to start
 
 	return mountPointDir
