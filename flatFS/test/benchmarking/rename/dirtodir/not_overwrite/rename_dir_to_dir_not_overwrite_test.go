@@ -6,11 +6,10 @@ import (
 	"log"
 	"time"
 	"os"
-	"github.com/sarpk/FlatFS/flatFS/test/in-memory"
 )
 
 func TestSetup(t *testing.T) {
-	UtilsFlatFs.RecurseThroughFolders("/tmp/lpbckmtpt/", UtilsFlatFs.MOUNT_POINT_PATH, t)
+	UtilsFlatFs.RecurseThroughFolders(UtilsFlatFs.MOUNT_POINT_PATH, t)
 }
 
 func TestDirToDirectoryMoveForHFS(t *testing.T) {
@@ -26,7 +25,7 @@ func TestDirToDirectoryMoveForFlatFs(t *testing.T) {
 }
 
 func TestTerminate(t *testing.T) {
-	FlatFS.Terminate(UtilsFlatFs.MOUNT_POINT_PATH)
+	UtilsFlatFs.Terminate()
 }
 
 func RenameFileWrapperAppendWithQueryRandom(oldPath, newPath string) {

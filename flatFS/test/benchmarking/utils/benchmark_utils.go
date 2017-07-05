@@ -20,6 +20,8 @@ var FlatFsFileNames = make([]string, 0)
 var HFSFileNames = make([]string, 0)
 
 var MOUNT_POINT_PATH = FlatFS.GetCurrentDir() + "/mountpoint/"
+var MOUNT_POINT_PATH_HFS = FlatFS.GetCurrentDir() + "/hfs/"
+
 var RAND_STR = "MN12tA_j"
 
 type processFileRename func(string, string)
@@ -79,8 +81,10 @@ func FileBenchmark(fileListPath string, fun processFile) {
 	}
 }
 
-func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
+func RecurseThroughFolders(flatFsPath string, t *testing.T) {
 	FlatFS.CreateFlatFS()
+	CopyFiles()
+	rootPath := MOUNT_POINT_PATH_HFS
 	rootDirectory := ScanDirectory(rootPath, t)
 	nextDirectories := FilterAsDirectoryPath(rootDirectory, rootPath)
 	rand.Seed(63)
@@ -96,6 +100,21 @@ func RecurseThroughFolders(rootPath, flatFsPath string, t *testing.T) {
 	ShuffleArrays()
 	WriteArrays()
 	log.Println("size is ", len(FlatFsFileNames))
+}
+
+func CopyFiles() {
+	os.Mkdir(MOUNT_POINT_PATH_HFS, os.ModePerm)
+	err := CopyDir("/tmp/benchmark/", MOUNT_POINT_PATH_HFS)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Directory copied")
+	}
+
+}
+
+func Terminate() {
+	FlatFS.Terminate(MOUNT_POINT_PATH)
 }
 
 func ReadArrays(fileName string) []string {
@@ -155,7 +174,7 @@ func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath
 			//10% chance to match
 			os.Create(fileNameToSave)
 			FlatFsFileNames = append(FlatFsFileNames, fileNameToSave)
-			HFSFileNames = append(HFSFileNames, "/tmp/lpbckmtpt/" + attributesToAdd + "/" + fileName)
+			HFSFileNames = append(HFSFileNames, MOUNT_POINT_PATH_HFS + attributesToAdd + "/" + fileName)
 		}
 	}
 }
@@ -197,6 +216,78 @@ func ScanDirectory(dir string, t *testing.T) []os.FileInfo {
 
 
 
+
+
+func CopyFile(source string, dest string) (err error) {
+	sourcefile, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+
+	defer sourcefile.Close()
+
+	destfile, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+
+	defer destfile.Close()
+
+	_, err = io.Copy(destfile, sourcefile)
+	if err == nil {
+		sourceinfo, err := os.Stat(source)
+		if err != nil {
+			err = os.Chmod(dest, sourceinfo.Mode())
+		}
+
+	}
+
+	return
+}
+
+func CopyDir(source string, dest string) (err error) {
+
+	// get properties of source dir
+	sourceinfo, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+
+	// create dest dir
+
+	err = os.MkdirAll(dest, sourceinfo.Mode())
+	if err != nil {
+		return err
+	}
+
+	directory, _ := os.Open(source)
+
+	objects, err := directory.Readdir(-1)
+
+	for _, obj := range objects {
+
+		sourcefilepointer := source + "/" + obj.Name()
+
+		destinationfilepointer := dest + "/" + obj.Name()
+
+
+		if obj.IsDir() {
+			// create sub-directories - recursively
+			err = CopyDir(sourcefilepointer, destinationfilepointer)
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			// perform copy
+			err = CopyFile(sourcefilepointer, destinationfilepointer)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
+	}
+	return
+}
 
 
 
