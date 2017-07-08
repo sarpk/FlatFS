@@ -10,7 +10,7 @@ import (
 
 
 func TestSetup(t *testing.T) {
-	UtilsFlatFs.RecurseThroughFolders("/tmp/lpbckmtpt/", UtilsFlatFs.MOUNT_POINT_PATH, t)
+	UtilsFlatFs.RecurseThroughFolders(UtilsFlatFs.MOUNT_POINT_PATH, t)
 }
 
 func TestFileDeleteBenchmarkForFlatFS(t *testing.T) {
