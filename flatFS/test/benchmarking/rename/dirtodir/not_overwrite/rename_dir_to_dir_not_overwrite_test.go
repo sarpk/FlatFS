@@ -9,7 +9,7 @@ import (
 )
 
 func TestSetup(t *testing.T) {
-	UtilsFlatFs.RecurseThroughFolders(UtilsFlatFs.MOUNT_POINT_PATH, t)
+	UtilsFlatFs.RecurseThroughFolderWithSave(UtilsFlatFs.MOUNT_POINT_PATH, t, true)
 }
 
 func TestDirToDirectoryMoveForHFS(t *testing.T) {
@@ -33,7 +33,7 @@ func RenameFileWrapperAppendWithQueryRandom(oldPath, newPath string) {
 }
 
 func RenameFileWrapperAddRandomPath(oldPath, newPath string) {
-	newRandomPath := UtilsFlatFs.GetParentFolder(newPath) + UtilsFlatFs.RAND_STR + "/"
+	newRandomPath := newPath + UtilsFlatFs.RAND_STR + "/"
 	os.Mkdir(newRandomPath, os.ModePerm)
-	UtilsFlatFs.RenameFileWrapper(UtilsFlatFs.GetParentFolder(oldPath), newRandomPath)
+	UtilsFlatFs.RenameFileWrapper(oldPath, newRandomPath)
 }

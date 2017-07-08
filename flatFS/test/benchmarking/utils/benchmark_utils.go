@@ -41,17 +41,14 @@ func GetParentFolder(path string) string {
 }
 
 func AppendQueryParam(path string) string {
-	return MOUNT_POINT_PATH + "?" + strings.Split(path, MOUNT_POINT_PATH)[1]
+	splitStr := strings.Split(path, MOUNT_POINT_PATH)
+	if len(splitStr) < 2 {
+		return ""
+	}
+	return MOUNT_POINT_PATH + "?" + splitStr[1]
 }
 
 func RenameFileWrapper(oldPath, newPath string) {
-	log.Printf("old path is %s and new path is %s", oldPath, newPath)
-	oldPathStat, _ := os.Stat(oldPath)
-	newPathStat, _ := os.Stat(newPath)
-	if (newPathStat != nil && oldPathStat != nil) {
-		log.Printf("old path is %v and new path is %v", oldPathStat.IsDir(), newPathStat.IsDir())
-	}
-
 	err := syscall.Rename(oldPath, newPath)
 	if err != nil {
 		log.Println("Rename file wrapper err ", err)
@@ -82,20 +79,31 @@ func FileBenchmark(fileListPath string, fun processFile) {
 }
 
 func RecurseThroughFolders(flatFsPath string, t *testing.T) {
+	RecurseThroughFolderWithSave(flatFsPath, t, false)
+}
+
+func RecurseThroughFolderWithSave(flatFsPath string, t *testing.T, onlyFolderSave bool) {
 	FlatFS.CreateFlatFS()
 	CopyFiles()
 	rootPath := MOUNT_POINT_PATH_HFS
 	rootDirectory := ScanDirectory(rootPath, t)
 	nextDirectories := FilterAsDirectoryPath(rootDirectory, rootPath)
 	rand.Seed(63)
-	SaveFilesInDirectoryToFlatFs(rootDirectory, flatFsPath, rootPath, rootPath)
+	SaveFilesInDirectoryToFlatFs(rootDirectory, flatFsPath, rootPath, rootPath, onlyFolderSave)
 	for len(nextDirectories) != 0 {
 		nextDirectory := nextDirectories[0]
 		nextDirectories = nextDirectories[1:]
 		currentScan := ScanDirectory(nextDirectory, t)
 		directoriesToAdd := FilterAsDirectoryPath(currentScan, nextDirectory)
 		nextDirectories = append(nextDirectories, directoriesToAdd...)
-		SaveFilesInDirectoryToFlatFs(currentScan, flatFsPath, nextDirectory, rootPath)
+		if onlyFolderSave {
+			if len(directoriesToAdd) == 0 {
+				SaveFilesInDirectoryToFlatFs(currentScan, flatFsPath, nextDirectory, rootPath, onlyFolderSave)
+			}
+		} else {
+			SaveFilesInDirectoryToFlatFs(currentScan, flatFsPath, nextDirectory, rootPath, onlyFolderSave)
+		}
+
 	}
 	ShuffleArrays()
 	WriteArrays()
@@ -150,7 +158,7 @@ func ShuffleArrays() {
 	}
 }
 
-func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath, rootPath string) {
+func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath, rootPath string, onlyFolder bool) {
 	attributesToAdd := currPath[len(rootPath):]
 	attributes := strings.Split(attributesToAdd, "/")[1:]
 	levelCount := 1
@@ -164,7 +172,12 @@ func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath
 	filesToBeSaved := FilterAsFileNames(dirContent)
 
 	//log.Println("files are going to be saved in: ", attrBuf.String())
-
+	if (onlyFolder) {
+		pathToSave := attrBuf.String()
+		pathToSave = pathToSave[0:len(pathToSave) - 1]
+		FlatFsFileNames = append(FlatFsFileNames, pathToSave)
+		HFSFileNames = append(HFSFileNames, currPath)
+	}
 	for _, fileName := range filesToBeSaved {
 		var filePath bytes.Buffer
 		filePath.Write(attrBuf.Bytes())
@@ -173,8 +186,10 @@ func SaveFilesInDirectoryToFlatFs(dirContent []os.FileInfo, flatFsPath, currPath
 		if rand.Intn(10) == 5 {
 			//10% chance to match
 			os.Create(fileNameToSave)
-			FlatFsFileNames = append(FlatFsFileNames, fileNameToSave)
-			HFSFileNames = append(HFSFileNames, MOUNT_POINT_PATH_HFS + attributesToAdd + "/" + fileName)
+			if !onlyFolder {
+				FlatFsFileNames = append(FlatFsFileNames, fileNameToSave)
+				HFSFileNames = append(HFSFileNames, MOUNT_POINT_PATH_HFS + attributesToAdd + "/" + fileName)
+			}
 		}
 	}
 }
@@ -213,10 +228,6 @@ func ScanDirectory(dir string, t *testing.T) []os.FileInfo {
 	}
 	return files
 }
-
-
-
-
 
 func CopyFile(source string, dest string) (err error) {
 	sourcefile, err := os.Open(source)
@@ -269,7 +280,6 @@ func CopyDir(source string, dest string) (err error) {
 		sourcefilepointer := source + "/" + obj.Name()
 
 		destinationfilepointer := dest + "/" + obj.Name()
-
 
 		if obj.IsDir() {
 			// create sub-directories - recursively
