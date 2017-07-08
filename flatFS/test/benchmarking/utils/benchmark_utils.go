@@ -49,9 +49,12 @@ func AppendQueryParam(path string) string {
 }
 
 func RenameFileWrapper(oldPath, newPath string) {
+	if len(oldPath) == 0 || len(newPath) == 0 {
+		return
+	}
 	err := syscall.Rename(oldPath, newPath)
 	if err != nil {
-		log.Println("Rename file wrapper err ", err)
+		log.Println("Rename file wrapper err ", err, oldPath, newPath)
 	}
 }
 
@@ -60,14 +63,13 @@ func FileBenchmarkTwoProcess(fileListPath string, fun processFileRename) {
 	fileListSize := len(fileList);
 	j := fileListSize - 1;
 	for i := 0; i < fileListSize; i++ {
-		if i == j {
+		if i >= j {
 			break;
 		}
 		fun(fileList[i], fileList[j])
 		j--
 	}
 }
-
 
 type processFile func(string)
 
@@ -90,6 +92,9 @@ func RecurseThroughFolderWithSave(flatFsPath string, t *testing.T, onlyFolderSav
 	nextDirectories := FilterAsDirectoryPath(rootDirectory, rootPath)
 	rand.Seed(63)
 	SaveFilesInDirectoryToFlatFs(rootDirectory, flatFsPath, rootPath, rootPath, onlyFolderSave)
+	if onlyFolderSave {
+		FlatFsFileNames = FlatFsFileNames[1:]
+	}
 	for len(nextDirectories) != 0 {
 		nextDirectory := nextDirectories[0]
 		nextDirectories = nextDirectories[1:]
@@ -131,7 +136,6 @@ func ReadArrays(fileName string) []string {
 	gob.NewDecoder(bytes.NewBuffer(b)).Decode(&fileList)
 	return fileList
 }
-
 
 func WriteArrays() {
 	buf1 := &bytes.Buffer{}
