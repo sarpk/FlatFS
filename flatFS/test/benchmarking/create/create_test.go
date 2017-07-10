@@ -24,6 +24,10 @@ func TestFileCreateBenchmarkForHFS(t *testing.T) {
 	log.Printf("TestFileCreateBenchmarkForHFS took %s", time.Since(start))
 }
 
+func TestTerminate(t *testing.T) {
+	UtilsFlatFs.Terminate()
+}
+
 func FileCreateBenchmark(fileName string) {
 	UtilsFlatFs.FileBenchmark(fileName, CreateFileWrapper)
 }

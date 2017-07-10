@@ -24,6 +24,11 @@ func TestFileLookUpBenchmarkForHFS(t *testing.T) {
 	log.Printf("TestFileLookUpBenchmarkForHFS took %s", time.Since(start))
 }
 
+
+func TestTerminate(t *testing.T) {
+	UtilsFlatFs.Terminate()
+}
+
 func FileLookupBenchmark(fileName string) {
 	UtilsFlatFs.FileBenchmark(fileName, ReadFileWrapper)
 }

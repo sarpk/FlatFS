@@ -25,6 +25,10 @@ func TestFileDeleteBenchmarkForHFS(t *testing.T) {
 	log.Printf("TestFileDeleteBenchmarkForHFS took %s", time.Since(start))
 }
 
+func TestTerminate(t *testing.T) {
+	UtilsFlatFs.Terminate()
+}
+
 func FileDeleteBenchmark(fileName string) {
 	UtilsFlatFs.FileBenchmark(fileName, DeleteFileWrapper)
 }
