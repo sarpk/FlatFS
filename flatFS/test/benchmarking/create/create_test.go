@@ -13,12 +13,14 @@ func TestSetup(t *testing.T) {
 }
 
 func TestFileCreateBenchmarkForFlatFS(t *testing.T) {
+	UtilsFlatFs.FileBenchmark("FlatFsFileNames.txt", UtilsFlatFs.DeleteFileWrapper)
 	start := time.Now()
 	FileCreateBenchmark("FlatFsFileNames.txt")
 	log.Printf("TestFileCreateBenchmarkForFlatFS took %s", time.Since(start))
 }
 
 func TestFileCreateBenchmarkForHFS(t *testing.T) {
+	UtilsFlatFs.FileBenchmark("HFSFileNames.txt", UtilsFlatFs.DeleteFileWrapper)
 	start := time.Now()
 	FileCreateBenchmark("HFSFileNames.txt")
 	log.Printf("TestFileCreateBenchmarkForHFS took %s", time.Since(start))

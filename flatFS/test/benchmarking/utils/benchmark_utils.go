@@ -73,6 +73,13 @@ func FileBenchmarkTwoProcess(fileListPath string, fun processFileRename) {
 
 type processFile func(string)
 
+func DeleteFileWrapper(fileName string) {
+	err := os.Remove(fileName)
+	if err != nil {
+		log.Println("Delete file wrapper err ", err)
+	}
+}
+
 func FileBenchmark(fileListPath string, fun processFile) {
 	fileList := ReadArrays(fileListPath)
 	for _, fileName := range fileList {
