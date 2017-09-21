@@ -198,9 +198,6 @@ func (flatFs *FlatFs) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 		return nil, fuse.ToStatus(err)
 	}
 
-	for something, another := range foundQueries {
-		log.Printf("will process this query %v and %v", something, another)
-	}
 	output := make([]fuse.DirEntry, 0)
 	for _, foundQuery := range foundQueries {
 		d := fuse.DirEntry{
