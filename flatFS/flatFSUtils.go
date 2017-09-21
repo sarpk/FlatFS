@@ -3,13 +3,11 @@ package FlatFS
 import (
 	"flag"
 	"log"
-
 	"github.com/sarpk/go-fuse/fuse"
 	"github.com/sarpk/go-fuse/fuse/nodefs"
 	"github.com/sarpk/go-fuse/fuse/pathfs"
 	"os"
 	"path/filepath"
-	"syscall"
 	"strings"
 	"fmt"
 	"bytes"
@@ -117,19 +115,6 @@ func (flatFs *FlatFs) OpenFileAsLoopback(fileName string, flags int) (file nodef
 		return nil, fuse.ToStatus(err)
 	}
 	return nodefs.NewLoopbackFile(f), fuse.OK
-}
-
-func (flatFs *FlatFs) UnlinkParsedQuery(parsedQuery *QueryKeyValue) fuse.Status {
-	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, createFileSpecQueryType())
-	if !fileFound {
-		return fuse.ENODATA;
-	}
-	fullPath := flatFs.GetPath(uuid)
-	deleteStatus := fuse.ToStatus(syscall.Unlink(fullPath))
-	if deleteStatus == fuse.OK {
-		flatFs.attrMapper.DeleteUUIDFromQuery(parsedQuery, uuid)
-	}
-	return deleteStatus
 }
 
 func (flatFs *FlatFs) GetPath(relPath string) string {

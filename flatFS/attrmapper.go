@@ -5,6 +5,8 @@ package FlatFS
 import (
 	"log"
 	"github.com/nu7hatch/gouuid"
+	"syscall"
+	"github.com/sarpk/go-fuse/fuse"
 )
 
 type AttrMapper interface {
@@ -21,7 +23,7 @@ func RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
 		return
 	}
 	fs.attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
-	fs.UnlinkParsedQuery(newSpec)
+	UnlinkParsedQuery(newSpec, fs)
 	AddUUIDToAttributes(newSpec, fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
 
@@ -59,4 +61,17 @@ func CreateNewUUID(attributes *QueryKeyValue, addQueryToUUID func(string, string
 		log.Fatalf("Could not generate GUID for %v \n Error %v \n", attributes, err)
 	}
 	return ""
+}
+
+func UnlinkParsedQuery(parsedQuery *QueryKeyValue, flatFs *FlatFs) fuse.Status {
+	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, createFileSpecQueryType())
+	if !fileFound {
+		return fuse.ENODATA;
+	}
+	fullPath := flatFs.GetPath(uuid)
+	deleteStatus := fuse.ToStatus(syscall.Unlink(fullPath))
+	if deleteStatus == fuse.OK {
+		flatFs.attrMapper.DeleteUUIDFromQuery(parsedQuery, uuid)
+	}
+	return deleteStatus
 }

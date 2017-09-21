@@ -228,7 +228,7 @@ func (flatFs *FlatFs) Unlink(name string, context *fuse.Context) (code fuse.Stat
 	if !querySpec.fileSpec {
 		return fuse.EINVAL;
 	}
-	return flatFs.UnlinkParsedQuery(parsedQuery)
+	return UnlinkParsedQuery(parsedQuery, flatFs)
 }
 
 func (flatFs *FlatFs) Mkdir(path string, mode uint32, context *fuse.Context) (code fuse.Status) {
