@@ -238,7 +238,7 @@ func (flatFs *FlatFs) Mkdir(path string, mode uint32, context *fuse.Context) (co
 func (flatFs *FlatFs) CreateWithNewPath(name string, flags uint32, mode uint32, context *fuse.Context) (file nodefs.File, code fuse.Status, newPath string) {
 	log.Printf("create file name is %s", name)
 	parsedQuery, _ := ParseQuery(name)
-	newPath = flatFs.attrMapper.CreateFromQuery(parsedQuery)
+	newPath = CreateFromQuery(parsedQuery, flatFs)
 	log.Printf("Saving the file name as %s", newPath)
 	f, err := os.OpenFile(flatFs.GetPath(newPath), int(flags) | os.O_CREATE, os.FileMode(mode))
 	return nodefs.NewLoopbackFile(f), fuse.ToStatus(err), newPath

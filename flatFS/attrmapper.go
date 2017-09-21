@@ -8,7 +8,6 @@ import (
 )
 
 type AttrMapper interface {
-	CreateFromQuery(*QueryKeyValue) string
 	GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool)
 	FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool)
 	DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string)
@@ -41,6 +40,14 @@ func AddUUIDToAttributes(attributes *QueryKeyValue, addQueryToUUID func(string, 
 		//log.Println("Adding:", key, " and value ", value, " to ", uuid)
 		addQueryToUUID(key, value, uuid)
 	}
+}
+
+func CreateFromQuery(attributes *QueryKeyValue, fs *FlatFs) string {
+	uuidStr, attributeAdded := fs.attrMapper.GetAddedUUID(attributes, createFileSpecQueryType())
+	if attributeAdded {
+		return uuidStr
+	}
+	return CreateNewUUID(attributes, fs.attrMapper.AddQueryToUUID)
 }
 
 func CreateNewUUID(attributes *QueryKeyValue, addQueryToUUID func(string, string, string)) string {

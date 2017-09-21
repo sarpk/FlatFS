@@ -3,7 +3,6 @@
 package FlatFS
 
 import (
-	"log"
 	"strings"
 )
 
@@ -71,7 +70,6 @@ func AppendQueryKeyValue(toBeAppended *QueryKeyValue, toAppend *QueryKeyValue) *
 	}
 	return toBeAppended
 }
-
 
 func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
 	return strings == nil || strings[key] == nil || strings[key][value] == nil
@@ -200,11 +198,4 @@ func (attrMapper *MemAttrMapper) Close() {
 	//TODO Save it to disk
 }
 
-func (attrMapper *MemAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
-	log.Println("Mocking middleware")
-	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, createFileSpecQueryType())
-	if attributeAdded {
-		return uuidStr
-	}
-	return CreateNewUUID(attributes, attrMapper.AddQueryToUUID)
-}
+

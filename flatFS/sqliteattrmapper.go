@@ -161,7 +161,6 @@ func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyV
 	return nil, false
 }
 
-
 func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bool) {
 	if attributes == nil || attributes.keyValue == nil || len(attributes.keyValue) == 0 {
 		return "", "", false
@@ -202,7 +201,8 @@ func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, quer
 		log.Println("Built this query ", builtQuery)
 		results := attrMapper.ReadEntries2(builtQuery)
 		log.Println(results)
-		if len(results) == 0 && !queryType.fileSpec { //Definitely not a file, potentially could be a directory
+		if len(results) == 0 && !queryType.fileSpec {
+			//Definitely not a file, potentially could be a directory
 			if strings.EqualFold(builtQuery, secondary) {
 				return "", false
 			}
@@ -231,13 +231,3 @@ func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	attrMapper.StoreEntry([]FileMetadataEntry{file})
 }
 
-func (attrMapper *SQLiteAttrMapper) CreateFromQuery(attributes *QueryKeyValue) string {
-	log.Println("Not implemented")
-
-	uuidStr, attributeAdded := attrMapper.GetAddedUUID(attributes, createFileSpecQueryType())
-	if attributeAdded {
-		return uuidStr
-	}
-	return CreateNewUUID(attributes, attrMapper.AddQueryToUUID)
-
-}
