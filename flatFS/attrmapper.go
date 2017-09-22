@@ -73,3 +73,10 @@ func UnlinkParsedQuery(parsedQuery *QueryKeyValue, flatFs *FlatFs) fuse.Status {
 	}
 	return deleteStatus
 }
+
+func AppendQueryKeyValue(toBeAppended *QueryKeyValue, toAppend *QueryKeyValue) *QueryKeyValue {
+	for key, value := range toAppend.keyValue {
+		toBeAppended.keyValue[key] = value
+	}
+	return toBeAppended
+}

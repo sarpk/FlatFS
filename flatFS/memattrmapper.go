@@ -64,13 +64,6 @@ func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, 
 	}
 }
 
-func AppendQueryKeyValue(toBeAppended *QueryKeyValue, toAppend *QueryKeyValue) *QueryKeyValue {
-	for key, value := range toAppend.keyValue {
-		toBeAppended.keyValue[key] = value
-	}
-	return toBeAppended
-}
-
 func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
 	return strings == nil || strings[key] == nil || strings[key][value] == nil
 }
