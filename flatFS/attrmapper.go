@@ -35,13 +35,6 @@ func AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
 	AddUUIDToAttributes(AppendQueryKeyValue(oldSpec, newSpec), fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
 
-func AddUUIDToAttributes(attributes *QueryKeyValue, addQueryToUUID func(string, string, string), uuid string) {
-	for key, value := range attributes.keyValue {
-		//log.Println("Adding:", key, " and value ", value, " to ", uuid)
-		addQueryToUUID(key, value, uuid)
-	}
-}
-
 func CreateFromQuery(attributes *QueryKeyValue, fs *FlatFs) string {
 	uuidStr, attributeAdded := fs.attrMapper.GetAddedUUID(attributes, createFileSpecQueryType())
 	if attributeAdded {
@@ -60,6 +53,14 @@ func CreateNewUUID(attributes *QueryKeyValue, addQueryToUUID func(string, string
 	}
 	return ""
 }
+
+func AddUUIDToAttributes(attributes *QueryKeyValue, addQueryToUUID func(string, string, string), uuid string) {
+	for key, value := range attributes.keyValue {
+		//log.Println("Adding:", key, " and value ", value, " to ", uuid)
+		addQueryToUUID(key, value, uuid)
+	}
+}
+
 
 func UnlinkParsedQuery(parsedQuery *QueryKeyValue, flatFs *FlatFs) fuse.Status {
 	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, createFileSpecQueryType())
