@@ -10,7 +10,7 @@ import (
 type AttrMapper interface {
 	GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool)
 	FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool)
-	DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string)
+	DeleteQueryToUUID(key, value, uuid string)
 	Close()
 	AddQueryToUUID(key, value, uuid string)
 }
@@ -20,7 +20,7 @@ func RenameQuery(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
 	if !found {
 		return
 	}
-	fs.attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
+	DeleteUUIDFromQuery(oldSpec, fs.attrMapper.DeleteQueryToUUID, uuidMatchingToFile)
 	UnlinkParsedQuery(newSpec, fs)
 	AddUUIDToAttributes(newSpec, fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
@@ -30,7 +30,7 @@ func AppendOldSpec(oldSpec *QueryKeyValue, newSpec *QueryKeyValue, fs *FlatFs) {
 	if !found {
 		return
 	}
-	fs.attrMapper.DeleteUUIDFromQuery(oldSpec, uuidMatchingToFile)
+	DeleteUUIDFromQuery(oldSpec, fs.attrMapper.DeleteQueryToUUID, uuidMatchingToFile)
 
 	AddUUIDToAttributes(AppendQueryKeyValue(oldSpec, newSpec), fs.attrMapper.AddQueryToUUID, uuidMatchingToFile)
 }
@@ -54,22 +54,27 @@ func CreateNewUUID(attributes *QueryKeyValue, addQueryToUUID func(string, string
 	return ""
 }
 
+func DeleteUUIDFromQuery(attributes *QueryKeyValue, deleteUUIDFromKeyValue func(string, string, string), uuid string) {
+	for key, value := range attributes.keyValue {
+		deleteUUIDFromKeyValue(key, value, uuid)
+	}
+}
+
 func AddUUIDToAttributes(attributes *QueryKeyValue, addQueryToUUID func(string, string, string), uuid string) {
 	for key, value := range attributes.keyValue {
-		//log.Println("Adding:", key, " and value ", value, " to ", uuid)
 		addQueryToUUID(key, value, uuid)
 	}
 }
 
-func UnlinkParsedQuery(parsedQuery *QueryKeyValue, flatFs *FlatFs) fuse.Status {
-	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, createFileSpecQueryType())
+func UnlinkParsedQuery(parsedQuery *QueryKeyValue, fs *FlatFs) fuse.Status {
+	uuid, fileFound := fs.attrMapper.GetAddedUUID(parsedQuery, createFileSpecQueryType())
 	if !fileFound {
 		return fuse.ENODATA;
 	}
-	fullPath := flatFs.GetPath(uuid)
+	fullPath := fs.GetPath(uuid)
 	deleteStatus := fuse.ToStatus(syscall.Unlink(fullPath))
 	if deleteStatus == fuse.OK {
-		flatFs.attrMapper.DeleteUUIDFromQuery(parsedQuery, uuid)
+		DeleteUUIDFromQuery(parsedQuery, fs.attrMapper.DeleteQueryToUUID, uuid)
 	}
 	return deleteStatus
 }

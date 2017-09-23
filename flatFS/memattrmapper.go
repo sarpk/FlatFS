@@ -70,10 +70,9 @@ func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValu
 	return queryKeyValues, true
 }
 
-func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
-	for key, value := range attributes.keyValue {
-		attrMapper.DeleteUUIDFromKeyValue(key, value, uuid)
-	}
+func (attrMapper *MemAttrMapper) DeleteQueryToUUID(key, value, uuid string) {
+	delete(attrMapper.uuidToAttributeValue[uuid], key)
+	attrMapper.queryToUuid[key][value] = RemoveFromString(attrMapper.queryToUuid[key][value], uuid)
 }
 
 func (attrMapper *MemAttrMapper) Close() {
@@ -108,12 +107,6 @@ func (attrMapper *MemAttrMapper) FindAllMatchingMultipleUUIDs(attributes *QueryK
 		return uniqueVal, true
 	}
 	return nil, false
-}
-
-func (attrMapper *MemAttrMapper) DeleteUUIDFromKeyValue(key, value, uuid string) {
-	//delete(attrMapper.uuidToAttributeValue[uuid], uuid)
-	delete(attrMapper.uuidToAttributeValue[uuid], key)
-	attrMapper.queryToUuid[key][value] = RemoveFromString(attrMapper.queryToUuid[key][value], uuid)
 }
 
 func (attrMapper *MemAttrMapper) ReturnEqualAttributeResult(uniqueVal map[string]bool, attributes map[string]string) (string, bool) {

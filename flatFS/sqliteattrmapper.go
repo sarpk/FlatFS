@@ -89,11 +89,9 @@ func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyV
 	return nil, false
 }
 
-func (attrMapper *SQLiteAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
-	for key, value := range attributes.keyValue {
-		deleteQuery := fmt.Sprintf("Delete FROM FileMetadata WHERE fileID='%v' AND attribute='%v' AND value='%v'", uuid, key, value)
-		attrMapper.ReadFileIdFromDB(deleteQuery)
-	}
+func (attrMapper *SQLiteAttrMapper) DeleteQueryToUUID(key, value, uuid string) {
+	deleteQuery := fmt.Sprintf("Delete FROM FileMetadata WHERE fileID='%v' AND attribute='%v' AND value='%v'", uuid, key, value)
+	attrMapper.ReadFileIdFromDB(deleteQuery)
 }
 
 func (attrMapper *SQLiteAttrMapper) Close() {
