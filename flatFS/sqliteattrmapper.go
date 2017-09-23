@@ -60,7 +60,7 @@ func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, quer
 }
 
 func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
-	builtQuery, querySuccess := attrMapper.QueryBuilderForMultipleUUIDSelections(attributes)
+	builtQuery, querySuccess := QueryBuilderForMultipleUUIDSelections(attributes)
 	if querySuccess {
 		log.Println("Built this query for all matching uuids ", builtQuery)
 		results := attrMapper.ReadWholeRowFromDB(builtQuery)
@@ -187,13 +187,11 @@ func (attrMapper *SQLiteAttrMapper) StoreEntry(entries []FileMetadataEntry) {
 	}
 }
 
-func (attrMapper *SQLiteAttrMapper) QueryBuilderForMultipleUUIDSelections(attributes *QueryKeyValue) (string, bool) {
+func QueryBuilderForMultipleUUIDSelections(attributes *QueryKeyValue) (string, bool) {
 	_, mainQuery, foundQuery := QueryBuilderForUUIDSelection(attributes)
 	if !foundQuery {
 		return "", false
 	}
-	preResults := attrMapper.ReadFileIdFromDB(mainQuery)
-	log.Println(preResults)
 	return fmt.Sprintf("SELECT fileID, key, value FROM FileMetadata WHERE fileID IN ( %v )", mainQuery), true
 }
 
