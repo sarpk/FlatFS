@@ -61,7 +61,6 @@ func AddUUIDToAttributes(attributes *QueryKeyValue, addQueryToUUID func(string, 
 	}
 }
 
-
 func UnlinkParsedQuery(parsedQuery *QueryKeyValue, flatFs *FlatFs) fuse.Status {
 	uuid, fileFound := flatFs.attrMapper.GetAddedUUID(parsedQuery, createFileSpecQueryType())
 	if !fileFound {

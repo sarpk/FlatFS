@@ -148,3 +148,10 @@ func (flatFs *FlatFs) GetFileInfoFromUUID(uuid string) os.FileInfo {
 	}
 	return fInfo
 }
+
+func AddKeyValuePairToUUIDMap(key, value, uuid string, uuidMap map[string]map[string]string) {
+	if uuidMap[uuid] == nil {
+		uuidMap[uuid] = make(map[string]string, 0)
+	}
+	uuidMap[uuid][key] = value
+}

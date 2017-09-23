@@ -20,13 +20,6 @@ func NewMemAttrMapper() *MemAttrMapper {
 	return memAttrMapper
 }
 
-func AddKeyValuePairToUUIDMap(key, value, uuid string, uuidMap map[string]map[string]string) {
-	if uuidMap[uuid] == nil {
-		uuidMap[uuid] = make(map[string]string, 0)
-	}
-	uuidMap[uuid][key] = value
-}
-
 func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	if attrMapper.queryToUuid[key] == nil {
 		attrMapper.queryToUuid[key] = make(map[string][]string, 0)
