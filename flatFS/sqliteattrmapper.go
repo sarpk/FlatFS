@@ -16,9 +16,9 @@ type SQLiteAttrMapper struct {
 }
 
 type FileMetadataEntry struct {
-	fileID    string
-	attribute string
-	value     string
+	fileID string
+	key    string
+	value  string
 }
 
 func NewSQLiteAttrMapper() *SQLiteAttrMapper {
@@ -69,7 +69,7 @@ func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyV
 
 			uuidToAttributeValue := make(map[string]map[string]string, 0)
 			for _, entry := range results {
-				AddKeyValuePairToUUIDMap(entry.attribute, entry.value, entry.fileID, uuidToAttributeValue)
+				AddKeyValuePairToUUIDMap(entry.key, entry.value, entry.fileID, uuidToAttributeValue)
 			}
 
 			queryKeyValues := []UUIDToQuery{}
@@ -91,7 +91,7 @@ func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyV
 
 func (attrMapper *SQLiteAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
 	for key, value := range attributes.keyValue {
-		deleteQuery := fmt.Sprintf("Delete FROM FileMetadata WHERE fileID='%v' AND attribute='%v' AND value='%v'", uuid, key, value)
+		deleteQuery := fmt.Sprintf("Delete FROM FileMetadata WHERE fileID='%v' AND key='%v' AND value='%v'", uuid, key, value)
 		attrMapper.ReadFileIdFromDB(deleteQuery)
 	}
 }
@@ -103,7 +103,7 @@ func (attrMapper *SQLiteAttrMapper) Close() {
 func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	file := FileMetadataEntry{
 		fileID: uuid,
-		attribute: key,
+		key: key,
 		value: value,
 	}
 	attrMapper.StoreEntry([]FileMetadataEntry{file})
@@ -114,9 +114,9 @@ func (attrMapper *SQLiteAttrMapper) CreateTable() {
 	sql_table := `
 	CREATE TABLE IF NOT EXISTS FileMetadata(
 		fileID TEXT NOT NULL,
-		attribute TEXT NOT NULL,
+		key TEXT NOT NULL,
 		value TEXT,
-		PRIMARY KEY (fileID, attribute)
+		PRIMARY KEY (fileID, key)
 	);
 	`
 
@@ -136,7 +136,7 @@ func (attrMapper *SQLiteAttrMapper) ReadWholeRowFromDB(query string) []FileMetad
 	var result []FileMetadataEntry
 	for rows.Next() {
 		entry := FileMetadataEntry{}
-		err2 := rows.Scan(&entry.fileID, &entry.attribute, &entry.value)
+		err2 := rows.Scan(&entry.fileID, &entry.key, &entry.value)
 		if err2 != nil {
 			panic(err2)
 		}
@@ -168,7 +168,7 @@ func (attrMapper *SQLiteAttrMapper) StoreEntry(entries []FileMetadataEntry) {
 	sql_addEntry := `
 	INSERT OR REPLACE INTO FileMetadata(
 		fileID,
-		attribute,
+		key,
 		value
 	) values(?, ?, ?)
 	`
@@ -180,7 +180,7 @@ func (attrMapper *SQLiteAttrMapper) StoreEntry(entries []FileMetadataEntry) {
 	defer stmt.Close()
 
 	for _, entry := range entries {
-		_, err2 := stmt.Exec(entry.fileID, entry.attribute, entry.value)
+		_, err2 := stmt.Exec(entry.fileID, entry.key, entry.value)
 		if err2 != nil {
 			panic(err2)
 		}
@@ -194,7 +194,7 @@ func (attrMapper *SQLiteAttrMapper) QueryBuilderForMultipleUUIDSelections(attrib
 	}
 	preResults := attrMapper.ReadFileIdFromDB(mainQuery)
 	log.Println(preResults)
-	return fmt.Sprintf("SELECT fileID, attribute, value FROM FileMetadata WHERE fileID IN ( %v )", mainQuery), true
+	return fmt.Sprintf("SELECT fileID, key, value FROM FileMetadata WHERE fileID IN ( %v )", mainQuery), true
 }
 
 func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bool) {
@@ -208,8 +208,8 @@ func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bo
 			queryBuf.WriteString("INTERSECT ")
 			attrBuf.WriteString(" AND ")
 		}
-		queryBuf.WriteString(fmt.Sprintf("SELECT fileID FROM FileMetadata WHERE attribute='%v' AND value='%v' ", key, value))
-		attrBuf.WriteString(fmt.Sprintf("attribute!='%v'", key))
+		queryBuf.WriteString(fmt.Sprintf("SELECT fileID FROM FileMetadata WHERE key='%v' AND value='%v' ", key, value))
+		attrBuf.WriteString(fmt.Sprintf("key!='%v'", key))
 		someStr := queryBuf.String()
 		log.Println(someStr)
 	}
