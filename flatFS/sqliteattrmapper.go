@@ -32,8 +32,81 @@ func NewSQLiteAttrMapper() *SQLiteAttrMapper {
 	return sqliteAttrMapper
 }
 
+func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
+	builtQuery, secondary, querySuccess := QueryBuilderForUUIDSelection(attributes)
+	if querySuccess {
+		log.Println("Built this query ", builtQuery)
+		results := attrMapper.ReadFileIdFromDB(builtQuery)
+		log.Println(results)
+		if len(results) == 0 && !queryType.fileSpec {
+			//Definitely not a file, potentially could be a directory
+			if strings.EqualFold(builtQuery, secondary) {
+				return "", false
+			}
+			results = attrMapper.ReadFileIdFromDB(secondary)
+		}
+		if !queryType.fileSpec && len(results) > 0 {
+			return "", true //It's a file or a directory
+		}
+		if len(results) < 2 {
+			for _, result := range results {
+				return result.fileID, true
+			}
+		} else {
+			log.Fatal("Found ", len(results), " results instead of 1")
+		}
+	}
+	return "", false
+}
+
+func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
+	builtQuery, querySuccess := attrMapper.QueryBuilderForMultipleUUIDSelections(attributes)
+	if querySuccess {
+		log.Println("Built this query for all matching uuids ", builtQuery)
+		results := attrMapper.ReadWholeRowFromDB(builtQuery)
+		log.Println(results)
+		if len(results) > 0 {
+
+			uuidToAttributeValue := make(map[string]map[string]string, 0)
+			for _, entry := range results {
+				AddKeyValuePairToUUIDMap(entry.attribute, entry.value, entry.fileID, uuidToAttributeValue)
+			}
+
+			queryKeyValues := []UUIDToQuery{}
+			for uuid := range uuidToAttributeValue {
+				queryKeyValue := QueryKeyValue{
+					uuidToAttributeValue[uuid],
+				}
+				foundQuery := UUIDToQuery{
+					uuid,
+					queryKeyValue,
+				}
+				queryKeyValues = append(queryKeyValues, foundQuery)
+			}
+			return queryKeyValues, true
+		}
+	}
+	return nil, false
+}
+
+func (attrMapper *SQLiteAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
+	for key, value := range attributes.keyValue {
+		deleteQuery := fmt.Sprintf("Delete FROM FileMetadata WHERE fileID='%v' AND attribute='%v' AND value='%v'", uuid, key, value)
+		attrMapper.ReadFileIdFromDB(deleteQuery)
+	}
+}
+
 func (attrMapper *SQLiteAttrMapper) Close() {
 	attrMapper.db.Close()
+}
+
+func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
+	file := FileMetadataEntry{
+		fileID: uuid,
+		attribute: key,
+		value: value,
+	}
+	attrMapper.StoreEntry([]FileMetadataEntry{file})
 }
 
 func (attrMapper *SQLiteAttrMapper) CreateTable() {
@@ -53,7 +126,7 @@ func (attrMapper *SQLiteAttrMapper) CreateTable() {
 	}
 }
 
-func (attrMapper *SQLiteAttrMapper) ReadEntries(query string) []FileMetadataEntry {
+func (attrMapper *SQLiteAttrMapper) ReadWholeRowFromDB(query string) []FileMetadataEntry {
 	rows, err := attrMapper.db.Query(query)
 	if err != nil {
 		panic(err)
@@ -72,7 +145,7 @@ func (attrMapper *SQLiteAttrMapper) ReadEntries(query string) []FileMetadataEntr
 	return result
 }
 
-func (attrMapper *SQLiteAttrMapper) ReadEntries2(query string) []FileMetadataEntry {
+func (attrMapper *SQLiteAttrMapper) ReadFileIdFromDB(query string) []FileMetadataEntry {
 	rows, err := attrMapper.db.Query(query)
 	if err != nil {
 		panic(err)
@@ -114,51 +187,14 @@ func (attrMapper *SQLiteAttrMapper) StoreEntry(entries []FileMetadataEntry) {
 	}
 }
 
-func (attrMapper *SQLiteAttrMapper) ReadEntry() []FileMetadataEntry {
-	sql_readAll := `
-	SELECT fileID, attribute, value FROM FileMetadata
-	`
-	return attrMapper.ReadEntries(sql_readAll)
-}
-
 func (attrMapper *SQLiteAttrMapper) QueryBuilderForMultipleUUIDSelections(attributes *QueryKeyValue) (string, bool) {
 	_, mainQuery, foundQuery := QueryBuilderForUUIDSelection(attributes)
 	if !foundQuery {
 		return "", false
 	}
-	preResults := attrMapper.ReadEntries2(mainQuery)
+	preResults := attrMapper.ReadFileIdFromDB(mainQuery)
 	log.Println(preResults)
 	return fmt.Sprintf("SELECT fileID, attribute, value FROM FileMetadata WHERE fileID IN ( %v )", mainQuery), true
-}
-
-func (attrMapper *SQLiteAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
-	builtQuery, querySuccess := attrMapper.QueryBuilderForMultipleUUIDSelections(attributes)
-	if querySuccess {
-		log.Println("Built this query for all matching uuids ", builtQuery)
-		results := attrMapper.ReadEntries(builtQuery)
-		log.Println(results)
-		if len(results) > 0 {
-
-			uuidToAttributeValue := make(map[string]map[string]string, 0)
-			for _, entry := range results {
-				AddKeyValuePairToUUIDMap(entry.attribute, entry.value, entry.fileID, uuidToAttributeValue)
-			}
-
-			queryKeyValues := []UUIDToQuery{}
-			for uuid := range uuidToAttributeValue {
-				queryKeyValue := QueryKeyValue{
-					uuidToAttributeValue[uuid],
-				}
-				foundQuery := UUIDToQuery{
-					uuid,
-					queryKeyValue,
-				}
-				queryKeyValues = append(queryKeyValues, foundQuery)
-			}
-			return queryKeyValues, true
-		}
-	}
-	return nil, false
 }
 
 func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bool) {
@@ -183,51 +219,5 @@ func QueryBuilderForUUIDSelection(attributes *QueryKeyValue) (string, string, bo
 		queryBuf.Write(attrBuf.Bytes())
 	}
 	return queryBuf.String(), secondary, true
-}
-
-func (attrMapper *SQLiteAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
-	for key, value := range attributes.keyValue {
-		deleteQuery := fmt.Sprintf("Delete FROM FileMetadata WHERE fileID='%v' AND attribute='%v' AND value='%v'", uuid, key, value)
-		attrMapper.ReadEntries2(deleteQuery)
-	}
-}
-
-func (attrMapper *SQLiteAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
-	log.Println("Reading all entries")
-	log.Println(attrMapper.ReadEntry())
-
-	builtQuery, secondary, querySuccess := QueryBuilderForUUIDSelection(attributes)
-	if querySuccess {
-		log.Println("Built this query ", builtQuery)
-		results := attrMapper.ReadEntries2(builtQuery)
-		log.Println(results)
-		if len(results) == 0 && !queryType.fileSpec {
-			//Definitely not a file, potentially could be a directory
-			if strings.EqualFold(builtQuery, secondary) {
-				return "", false
-			}
-			results = attrMapper.ReadEntries2(secondary)
-		}
-		if !queryType.fileSpec && len(results) > 0 {
-			return "", true //It's a file or a directory
-		}
-		if len(results) < 2 {
-			for _, result := range results {
-				return result.fileID, true
-			}
-		} else {
-			log.Fatal("Found ", len(results), " results instead of 1")
-		}
-	}
-	return "", false
-}
-
-func (attrMapper *SQLiteAttrMapper) AddQueryToUUID(key, value, uuid string) {
-	file := FileMetadataEntry{
-		fileID: uuid,
-		attribute: key,
-		value: value,
-	}
-	attrMapper.StoreEntry([]FileMetadataEntry{file})
 }
 

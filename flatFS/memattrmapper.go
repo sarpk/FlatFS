@@ -20,6 +20,66 @@ func NewMemAttrMapper() *MemAttrMapper {
 	return memAttrMapper
 }
 
+func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
+	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
+	if !found {
+		return "", false
+	}
+	for key, value := range attributes.keyValue {
+		if IsQueryDoesntExistInTheAttributeMap(attrMapper.queryToUuid, key, value) {
+			return "", false
+		}
+		uniqueVal = ReduceUniqueValueMapFromAttributeMapper(attrMapper.queryToUuid[key][value], uniqueVal)
+		if len(uniqueVal) == 0 {
+			//it must mean that it's not unique enough
+			return "", false
+		}
+	}
+	if len(uniqueVal) == 0 {
+		return "", false //No unique UUID for the given query found
+	}
+
+	if !queryType.fileSpec {
+		return "", true //It's a file or a directory
+	}
+
+	path, unique := attrMapper.ReturnEqualAttributeResult(uniqueVal, attributes.keyValue)
+	if unique {
+		return path, true
+	}
+	return "", false //It's a directory, but not requested
+}
+
+func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
+	uuids, found := attrMapper.FindAllMatchingMultipleUUIDs(attributes)
+	if !found {
+		return nil, false
+	}
+	queryKeyValues := []UUIDToQuery{}
+	for uuid := range uuids {
+		queryKeyValue := QueryKeyValue{
+			attrMapper.uuidToAttributeValue[uuid],
+		}
+
+		foundQuery := UUIDToQuery{
+			uuid,
+			queryKeyValue,
+		}
+		queryKeyValues = append(queryKeyValues, foundQuery)
+	}
+	return queryKeyValues, true
+}
+
+func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
+	for key, value := range attributes.keyValue {
+		attrMapper.DeleteUUIDFromKeyValue(key, value, uuid)
+	}
+}
+
+func (attrMapper *MemAttrMapper) Close() {
+	//TODO Save it to disk
+}
+
 func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	if attrMapper.queryToUuid[key] == nil {
 		attrMapper.queryToUuid[key] = make(map[string][]string, 0)
@@ -29,20 +89,25 @@ func (attrMapper *MemAttrMapper) AddQueryToUUID(key, value, uuid string) {
 	AddKeyValuePairToUUIDMap(key, value, uuid, attrMapper.uuidToAttributeValue)
 }
 
-func RemoveFromString(s []string, element string) []string {
-	elementInd := -1
-	for i, val := range s {
-		if strings.EqualFold(element, val) {
-			elementInd = i
-			break
+func (attrMapper *MemAttrMapper) FindAllMatchingMultipleUUIDs(attributes *QueryKeyValue) (map[string]bool, bool) {
+	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
+	if !found {
+		return nil, false
+	}
+	for key, value := range attributes.keyValue {
+		if IsQueryDoesntExistInTheAttributeMap(attrMapper.queryToUuid, key, value) {
+			return nil, false
+		}
+		uniqueVal = ReduceUniqueValueMapFromAttributeMapper(attrMapper.queryToUuid[key][value], uniqueVal)
+		if len(uniqueVal) == 0 {
+			//it must mean that it's not unique enough
+			return nil, false
 		}
 	}
-	if elementInd == -1 {
-		return s
+	if len(uniqueVal) > 0 {
+		return uniqueVal, true
 	}
-
-	s[len(s) - 1], s[elementInd] = s[elementInd], s[len(s) - 1]
-	return s[:len(s) - 1]
+	return nil, false
 }
 
 func (attrMapper *MemAttrMapper) DeleteUUIDFromKeyValue(key, value, uuid string) {
@@ -51,14 +116,16 @@ func (attrMapper *MemAttrMapper) DeleteUUIDFromKeyValue(key, value, uuid string)
 	attrMapper.queryToUuid[key][value] = RemoveFromString(attrMapper.queryToUuid[key][value], uuid)
 }
 
-func (attrMapper *MemAttrMapper) DeleteUUIDFromQuery(attributes *QueryKeyValue, uuid string) {
-	for key, value := range attributes.keyValue {
-		attrMapper.DeleteUUIDFromKeyValue(key, value, uuid)
+func (attrMapper *MemAttrMapper) ReturnEqualAttributeResult(uniqueVal map[string]bool, attributes map[string]string) (string, bool) {
+	if uniqueVal == nil {
+		return "", false
 	}
-}
-
-func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
-	return strings == nil || strings[key] == nil || strings[key][value] == nil
+	for uniqueUuid := range uniqueVal {
+		if AttributesEqual(attrMapper.uuidToAttributeValue[uniqueUuid], attributes) {
+			return uniqueUuid, true
+		}
+	}
+	return "", false
 }
 
 func (attrMapper *MemAttrMapper) ReturnFirstUUIDFromAttribute(strings map[string]string) (map[string]bool, bool) {
@@ -97,91 +164,22 @@ func AttributesEqual(uniqueResAttrs map[string]string, attributes map[string]str
 	return true
 }
 
-func (attrMapper *MemAttrMapper) ReturnEqualAttributeResult(uniqueVal map[string]bool, attributes map[string]string) (string, bool) {
-	if uniqueVal == nil {
-		return "", false
-	}
-	for uniqueUuid := range uniqueVal {
-		if AttributesEqual(attrMapper.uuidToAttributeValue[uniqueUuid], attributes) {
-			return uniqueUuid, true
+func RemoveFromString(s []string, element string) []string {
+	elementInd := -1
+	for i, val := range s {
+		if strings.EqualFold(element, val) {
+			elementInd = i
+			break
 		}
 	}
-	return "", false
+	if elementInd == -1 {
+		return s
+	}
+
+	s[len(s) - 1], s[elementInd] = s[elementInd], s[len(s) - 1]
+	return s[:len(s) - 1]
 }
 
-func (attrMapper *MemAttrMapper) GetAddedUUID(attributes *QueryKeyValue, queryType QueryType) (string, bool) {
-	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
-	if !found {
-		return "", false
-	}
-	for key, value := range attributes.keyValue {
-		if IsQueryDoesntExistInTheAttributeMap(attrMapper.queryToUuid, key, value) {
-			return "", false
-		}
-		uniqueVal = ReduceUniqueValueMapFromAttributeMapper(attrMapper.queryToUuid[key][value], uniqueVal)
-		if len(uniqueVal) == 0 {
-			//it must mean that it's not unique enough
-			return "", false
-		}
-	}
-	if len(uniqueVal) == 0 {
-		return "", false //No unique UUID for the given query found
-	}
-
-	if !queryType.fileSpec {
-		return "", true //It's a file or a directory
-	}
-
-	path, unique := attrMapper.ReturnEqualAttributeResult(uniqueVal, attributes.keyValue)
-	if unique {
-		return path, true
-	}
-	return "", false //It's a directory, but not requested
+func IsQueryDoesntExistInTheAttributeMap(strings map[string]map[string][]string, key string, value string) bool {
+	return strings == nil || strings[key] == nil || strings[key][value] == nil
 }
-
-func (attrMapper *MemAttrMapper) FindAllMatchingMultipleUUIDs(attributes *QueryKeyValue) (map[string]bool, bool) {
-	uniqueVal, found := attrMapper.ReturnFirstUUIDFromAttribute(attributes.keyValue)
-	if !found {
-		return nil, false
-	}
-	for key, value := range attributes.keyValue {
-		if IsQueryDoesntExistInTheAttributeMap(attrMapper.queryToUuid, key, value) {
-			return nil, false
-		}
-		uniqueVal = ReduceUniqueValueMapFromAttributeMapper(attrMapper.queryToUuid[key][value], uniqueVal)
-		if len(uniqueVal) == 0 {
-			//it must mean that it's not unique enough
-			return nil, false
-		}
-	}
-	if len(uniqueVal) > 0 {
-		return uniqueVal, true
-	}
-	return nil, false
-}
-
-func (attrMapper *MemAttrMapper) FindAllMatchingQueries(attributes *QueryKeyValue) ([]UUIDToQuery, bool) {
-	uuids, found := attrMapper.FindAllMatchingMultipleUUIDs(attributes)
-	if !found {
-		return nil, false
-	}
-	queryKeyValues := []UUIDToQuery{}
-	for uuid := range uuids {
-		queryKeyValue := QueryKeyValue{
-			attrMapper.uuidToAttributeValue[uuid],
-		}
-
-		foundQuery := UUIDToQuery{
-			uuid,
-			queryKeyValue,
-		}
-		queryKeyValues = append(queryKeyValues, foundQuery)
-	}
-	return queryKeyValues, true
-}
-
-func (attrMapper *MemAttrMapper) Close() {
-	//TODO Save it to disk
-}
-
-
