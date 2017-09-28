@@ -164,7 +164,11 @@ func (flatFs *FlatFs) ReplaceSpecRenameHandle(context *fuse.Context, oldQuerySpe
 		for k, v := range newNameQuery.keyValue {
 			queryCopy.keyValue[k] = v
 		}
-		oldAndNewFileName[oldName] = ConvertToString(*queryCopy)
+		strToReplace := ConvertToString(*queryCopy);
+		if _, conflict := oldAndNewFileName[strToReplace]; conflict {
+			return fuse.ENOENT
+		}
+		oldAndNewFileName[oldName] = strToReplace
 	}
 	return flatFs.BatchRename(oldAndNewFileName, context)
 }
@@ -245,15 +249,14 @@ func (flatFs *FlatFs) CreateWithNewPath(name string, flags uint32, mode uint32, 
 }
 
 func (flatFs *FlatFs) Symlink(pointedTo string, linkName string, context *fuse.Context) (code fuse.Status) {
-
 	newName := flatFs.GetPath(linkName)
 	log.Printf("In Symlink impl newname is %v old name is %v", newName, pointedTo)
-
 	return fuse.ToStatus(os.Symlink(pointedTo, newName))
-
 }
 
 func (flatFs *FlatFs) Readlink(name string, context *fuse.Context) (string, fuse.Status) {
 	log.Println("In Readlink impl")
-	return "?a:1", fuse.OK
+	newName := flatFs.GetPath(name)
+	retVal, err := os.Readlink(newName)
+	return retVal, fuse.ToStatus(err)
 }
